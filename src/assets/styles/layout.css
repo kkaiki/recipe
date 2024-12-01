@@ -1,0 +1,30 @@
+.form-container {
+  max-width: 600px;  
+  margin: 0 auto;    
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+
+.btn-group-category {
+  display: flex;
+  justify-content: flex-start; /* 버튼들이 가로로 나열되도록 설정 */
+  gap: 5px; 
+  flex-wrap: nowrap; /* 버튼들이 한 줄에 배치되도록 설정 */
+  overflow-x: auto; /* 화면 너비를 벗어나면 가로 스크롤이 생기도록 설정 */
+  padding-bottom: 30px;
+}
+
+.edit-mode {
+  width: 39%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
