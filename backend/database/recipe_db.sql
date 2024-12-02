@@ -9,7 +9,8 @@
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
-SET time_zone = "+00:00";
+-- not summertime in vancouver
+SET time_zone = "-08:00";
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -186,6 +187,7 @@ CREATE TABLE `recipe` (
   `id` int NOT NULL,
   `name` varchar(1000) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `description` text COLLATE utf8mb4_general_ci,
+  `image` longblob,
   `is_active` tinyint(1) DEFAULT '1',
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP

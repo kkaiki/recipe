@@ -1,3 +1,24 @@
+<!-- 
+to get user data from the database
+
+expected parameters:
+- username
+- password
+
+check:
+- check authenication
+
+return:
+- id
+- username
+- first_name
+- last_name
+- email
+- profile
+- role
+- liked recipes
+- created recipes
+-->
 <?php
 $servername = "localhost";
 $username = "root";
