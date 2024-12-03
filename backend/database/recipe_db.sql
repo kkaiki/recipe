@@ -1,15 +1,29 @@
+-- If exsist tables, drop them
+SET FOREIGN_KEY_CHECKS = 0;
+
+DELETE FROM `auditrecord`;
+DELETE FROM `categories`;
+DELETE FROM `comment`;
+DELETE FROM `ingredient`;
+DELETE FROM `liked`;
+DELETE FROM `recipe`;
+DELETE FROM `recipe_categories`;
+DELETE FROM `users`;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
 -- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 01, 2024 at 11:02 PM
+-- Generation Time: Dec 03, 2024 at 01:14 AM
 -- Server version: 8.0.39
 -- PHP Version: 8.2.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
--- not summertime in vancouver
 SET time_zone = "-08:00";
 
 
@@ -25,12 +39,27 @@ SET time_zone = "-08:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `auditrecord`
+--
+
+CREATE TABLE `auditrecord` (
+  `id` int NOT NULL,
+  `user_id` int DEFAULT NULL,
+  `method` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
+  `error_message` varchar(10000) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ip_address` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `categories`
 --
 
 CREATE TABLE `categories` (
   `id` int NOT NULL,
-  `name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `image` longblob,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -59,7 +88,7 @@ INSERT INTO `categories` (`id`, `name`, `image`, `created_at`) VALUES
 
 CREATE TABLE `comment` (
   `id` int NOT NULL,
-  `comment` varchar(1000) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `comment` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `recipe_id` int NOT NULL,
   `created_by` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
@@ -95,7 +124,7 @@ INSERT INTO `comment` (`id`, `comment`, `recipe_id`, `created_by`, `created_at`)
 
 CREATE TABLE `ingredient` (
   `id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `recipe_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -185,9 +214,8 @@ INSERT INTO `liked` (`id`, `recipe_id`, `created_by`, `created_at`) VALUES
 
 CREATE TABLE `recipe` (
   `id` int NOT NULL,
-  `name` varchar(1000) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
-  `image` longblob,
+  `name` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
@@ -244,13 +272,13 @@ INSERT INTO `recipe_categories` (`recipe_id`, `category_id`) VALUES
 
 CREATE TABLE `users` (
   `id` int NOT NULL,
-  `username` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `first_name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `last_name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `password` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `first_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `profile` longblob,
-  `role` enum('admin','editor','viewer') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `role` enum('admin','editor','viewer') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -261,17 +289,22 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `username`, `first_name`, `last_name`, `email`, `password`, `profile`, `role`, `created_at`) VALUES
 (1, 'kaiki_admin', 'Kaiki', 'Kano', 'kaiki_admin@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'admin', '2024-12-01 22:59:50'),
 (2, 'kaiki_editor', 'Kaiki', 'Kano', 'kaiki_editor@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'editor', '2024-12-01 22:59:50'),
-(3, 'kaiki_viewer', 'Kaiki', 'Kano', 'kaiki_viewer@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'viewer', '2024-12-01 22:59:50'),
 (4, 'Yun_admin', 'Yun', 'Yun', 'Yun_admin@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'admin', '2024-12-01 22:59:50'),
-(5, 'Yun_editor', 'Yun', 'Yun', 'Yun_editor@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'editor', '2024-12-01 22:59:50'),
 (6, 'Yun_viewer', 'Yun', 'Yun', 'Yun_viewer@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'viewer', '2024-12-01 22:59:50'),
 (7, 'Joy_admin', 'Joy', 'Joy', 'Joy_admin@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'admin', '2024-12-01 22:59:50'),
 (8, 'Joy_editor', 'Joy', 'Joy', 'Joy_editor@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'editor', '2024-12-01 22:59:50'),
-(9, 'Joy_viewer', 'Joy', 'Joy', 'Joy_viewer@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'viewer', '2024-12-01 22:59:50');
+(9, 'Joy_viewer', 'Joy', 'Joy', 'Joy_viewer@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', NULL, 'viewer', '2024-12-01 22:59:50'),
+(10, 'new_user', 'New', 'User', 'new_user@example.com', '$2y$10$pHpOmpp9JC/i/cOXkAMunuMZHwXAZOOWkZYXV.7Xnywl9BNHD8qzu', NULL, 'viewer', '2024-12-02 05:14:38');
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `auditrecord`
+--
+ALTER TABLE `auditrecord`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `categories`
@@ -323,6 +356,12 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `auditrecord`
+--
+ALTER TABLE `auditrecord`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
@@ -356,7 +395,7 @@ ALTER TABLE `recipe`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- Constraints for dumped tables
