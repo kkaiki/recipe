@@ -1,10 +1,11 @@
 <?php
-$servername="localhost";
-$username="root";
-$password="mysql";
+$servername = "localhost";
+$username = "root";
+$password = "mysql";
 $dbname = "recipe_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
+
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -20,7 +21,9 @@ if ($result->num_rows > 0) {
         echo "Created At: " . $row["created_at"] . "<br>";
 
         if ($row["image"]) {
+            // base64로 인코딩하여 이미지 출력
             $imageData = base64_encode($row["image"]);
+            // MIME 타입을 적절히 설정하여 출력
             echo '<img src="data:image/jpeg;base64,' . $imageData . '" alt="Recipe Image" /><br>';
         } else {
             echo "No image available.<br>";
