@@ -19,9 +19,7 @@ if ($result->num_rows > 0) {
         echo "Description: " . $row["description"] . "<br>";
         echo "Created At: " . $row["created_at"] . "<br>";
 
-        // 이미지 데이터가 있는 경우
         if ($row["image"]) {
-            // base64로 인코딩하여 이미지 출력
             $imageData = base64_encode($row["image"]);
             echo '<img src="data:image/jpeg;base64,' . $imageData . '" alt="Recipe Image" /><br>';
         } else {
