@@ -1,7 +1,6 @@
 <?php
 
 require 'Like.php';
-require_once '../auth.php';
 require_once '../auditrecord.php';
 
 header('Content-Type: application/json');
