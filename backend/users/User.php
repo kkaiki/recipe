@@ -55,4 +55,17 @@ class User extends BaseModel {
             return $e->getMessage();
         }
     }
+
+    public function getUser($id) {
+        try {
+            $query = "SELECT * FROM users WHERE id = :id";
+            $params = [':id' => $id];
+            $stmt = $this->executeQuery($query, $params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC); // fetchAllからfetchに変更
+            return $result ? $result : [];
+        } catch (Exception $e) {
+            error_log("Error in User.php: " . $e->getMessage());
+            return null;
+        }
+    }
 }
