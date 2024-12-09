@@ -10,7 +10,6 @@ response:
 nothing(only 200 http status code)
 -->
 <?php
-require "../display_error.php";
 require_once 'User.php';
 require_once '../auth.php';
 require_once '../auditrecord.php';
