@@ -88,4 +88,30 @@ class User extends BaseModel {
             return null;
         }
     }
+
+    public function updateUser($id, $username, $email, $firstName, $lastName, $profile) {
+        try {
+            $fields = [];
+            $params = [':id' => $id];
+            $columns = ['username' => $username, 'email' => $email, 'first_name' => $firstName, 'last_name' => $lastName, 'profile' => $profile];
+
+            foreach ($columns as $column => $value) {
+                if ($value !== null) {
+                    $fields[] = "$column = :$column";
+                    $params[":$column"] = $value;
+                }
+            }
+
+            if (empty($fields)) {
+                throw new Exception("No fields to update.");
+            }
+
+            $query = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = :id";
+            $stmt = $this->executeQuery($query, $params);
+            return true;
+        } catch (Exception $e) {
+            error_log("Error in User.php: " . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
 }

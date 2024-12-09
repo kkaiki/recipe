@@ -9,7 +9,8 @@ try {
 
     $db = new Database();
     $connection = $db->getConnection();
-    $auth = new Auth($connection);
+
+    $auth = new Auth(db: $connection);
     $validUserId = $auth->checkAuth($input);
 
     $user = new User($connection);
