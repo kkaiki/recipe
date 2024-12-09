@@ -11,8 +11,9 @@ Content-Length: 49
     "id": 1
 } -->
  <?php
- require '../connect.php';
- header('Content-Type: application/json'); //json파일로 응답받음.
+    require_once '../auth.php';
+    require_once '../auditrecord.php';
+    header('Content-Type: application/json'); //json파일로 응답받음.
 
  try{
     //json 요청 데이터 파싱
@@ -24,12 +25,15 @@ Content-Length: 49
     //image를 longblob으로 받는데, binarydata를 저장할 수 있음. --> 이미지, 비디오, pdf, 오디오파일 등...
     $image = $input['image'] ?? null; 
 
-    if($name && $image){
-        $db = new Database();
+    $db = new Database();
         $connection = $db -> getConnection();
+        $auth = new Auth($connection);
+        $auth->checkAuth($input);
 
+    if($name && $image){
         $query = "INSERT INTO categories (name, image) VALUES (:name, :image)";
         //prepare 메소드 : PDO에서 제공하는 기능, sql 인젝션 방지, 효율적인 쿼리 실행 위해서
+        //따라서, stmt는 prepare에 쿼리문을 넣어진 것을 변수 stmt에 넣은것
         $stmt = $connection -> prepare($query);
         //blindParam 메소드 : sql 쿼리의 플레이스 홀더에 값을 레퍼런스로 연결함.
         //PDO::PARAM_STR : 문자열 데이터를 sql 쿼리의 플레이스 홀더에 바인딩하겠다.
@@ -42,14 +46,17 @@ Content-Length: 49
         //json_encode : php에서 제이슨 형식으로 데이터를 출력하는것...
         echo json_encode(['message' => 'Category created successfully.']);
     } else{
+        $audit = new Audit($connection);
+        $audit->record($input['local_storage_user_id'], 'DELETE', "Error in delete.php", $_SERVER['REMOTE_ADDR']);
         http_response_code(400); //400 : 잘못된 요청
         echo json_encode(['message' => 'Name and image are required.']);
     }
 } catch(Exception $e){
+    $audit = new Audit($connection);
+    $audit->record($input['local_storage_user_id'] ?? null, 'DELETE', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
     http_response_code(500); //500 : 서버 내부 오류
     echo json_encode(['message'=>'Error creating category.',
     'error'=>$e->getMessage()]);
 }
-
 
  ?>
