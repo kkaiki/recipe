@@ -24,6 +24,8 @@ return:
 // require '../connect.php';
 require 'User.php';
 require_once '../auth.php';
+require_once '../auditrecord.php';
+
 header('Content-Type: application/json');
 
 try {
@@ -52,6 +54,9 @@ try {
         echo json_encode(['message' => 'Username is required.']);
     }
 } catch (Exception $e) {
+    $audit = new Audit($connection);
+    $audit->record(null, 'GET', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
+
     error_log("Error in getUser.php: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['message' => 'Internal server error.', 'error' => $e->getMessage()]);
