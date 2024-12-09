@@ -68,4 +68,24 @@ class User extends BaseModel {
             return null;
         }
     }
+
+    public function login($email, $password) {
+        try {
+            $query = "SELECT id, password FROM users WHERE email = :email";
+            $params = [':email' => $email];
+            $stmt = $this->executeQuery($query, $params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($result && password_verify($password, $result['password'])) {
+                $id = $result['id'];
+                $hashedPassword = $result['password'];
+                return ['id' => $id, 'password' => $hashedPassword];
+            } else {
+                return null;
+            }
+        } catch (Exception $e) {
+            error_log("Error in User.php: " . $e->getMessage());
+            return null;
+        }
+    }
 }
