@@ -1,39 +1,51 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "mysql";
-$dbname = "recipe_db";
+require '../connect.php'; // Database connection
+require_once '../auditrecord.php'; // Audit class
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+header('Content-Type: application/json');
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+try {
+    $db = new Database();
+    $connection = $db->getConnection();
+    $audit = new Audit($connection);
 
-$sql = "SELECT id, name, description, created_at, image FROM recipe";  
-$result = $conn->query($sql);
+    // 쿼리 실행
+    $query = "SELECT id, name, description, created_at, image FROM recipe";
+    $stmt = $connection->query($query);
+    $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        echo "ID: " . $row["id"] . "<br>";
-        echo "Recipe Name: " . $row["name"] . "<br>";
-        echo "Description: " . $row["description"] . "<br>";
-        echo "Created At: " . $row["created_at"] . "<br>";
+    if (!empty($recipes)) {
+        foreach ($recipes as $recipe) {
+            echo "ID: " . htmlspecialchars($recipe["id"]) . "<br>";
+            echo "Recipe Name: " . htmlspecialchars($recipe["name"]) . "<br>";
+            echo "Description: " . htmlspecialchars($recipe["description"]) . "<br>";
+            echo "Created At: " . htmlspecialchars($recipe["created_at"]) . "<br>";
 
-        if ($row["image"]) {
-            // base64로 인코딩하여 이미지 출력
-            $imageData = base64_encode($row["image"]);
-            // MIME 타입을 적절히 설정하여 출력
-            echo '<img src="data:image/jpeg;base64,' . $imageData . '" alt="Recipe Image" /><br>';
-        } else {
-            echo "No image available.<br>";
+            if (!empty($recipe["image"])) {
+                // 이미지 데이터 처리
+                if (strpos($recipe["image"], '/') !== false) {
+                    // 이미지가 파일 경로인 경우
+                    echo '<img src="' . htmlspecialchars($recipe["image"]) . '" alt="Recipe Image" /><br>';
+                } else {
+                    // 이미지가 바이너리 데이터인 경우
+                    $imageData = base64_encode($recipe["image"]);
+                    echo '<img src="data:image/jpeg;base64,' . $imageData . '" alt="Recipe Image" /><br>';
+                }
+            } else {
+                echo "No image available.<br>";
+            }
+
+            echo "<hr>";
         }
-        
-        echo "<hr>"; 
+    } else {
+        echo "No results found.";
     }
-} else {
-    echo "No results found";
+} catch (PDOException $e) {
+    // 에러 발생 시 audit 기록 및 500 응답 반환
+    $audit->record($_GET['user_id'] ?? null, 'ERROR', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
+    http_response_code(500);
+    echo json_encode([
+        'message' => 'Error fetching recipes.',
+        'error' => $e->getMessage()
+    ]);
 }
-
-$conn->close();
-?>
