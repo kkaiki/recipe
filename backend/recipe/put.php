@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $params = [];
         $types = '';
 
+        // 필드가 있을 경우 업데이트할 쿼리 준비
         if (isset($data['name'])) {
             $fields[] = "name = ?";
             $params[] = $data['name'];
@@ -40,22 +41,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             $params[] = $data['description'];
             $types .= 's';
         }
-        if (isset($data['is_active'])) {
-            $fields[] = "is_active = ?";
-            $params[] = $data['is_active'];
-            $types .= 'i';
-        }
-        if (isset($data['created_by'])) {
-            $fields[] = "created_by = ?";
-            $params[] = $data['created_by'];
-            $types .= 'i';
+
+
+        // 이미지 업데이트가 있을 경우 처리
+        if (isset($data['image']) && !empty($data['image'])) {
+            // 이미지 Base64 디코딩
+            $image = $data['image'];
+            if ($image === false) {
+                echo json_encode(["message" => "Invalid Base64 image data"]);
+                http_response_code(400);
+                exit;
+            }
+            $fields[] = "image = ?";
+            $params[] = $image;
+            $types .= 'b';  // 바이너리 데이터
         }
 
+        // 업데이트할 필드가 있다면
         if (count($fields) > 0) {
             $sql = "UPDATE recipe SET " . implode(", ", $fields) . " WHERE id = ?";
             $params[] = $id;
-            $types .= 'i';
+            $types .= 'i';  // ID는 정수형이므로 'i' 추가
 
+            print_r($sql."<br>");
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
                 die("Prepare failed: " . $conn->error);
@@ -63,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 
             $stmt->bind_param($types, ...$params);
 
+            // 쿼리 실행
             if ($stmt->execute()) {
                 if ($stmt->affected_rows > 0) {
                     http_response_code(200);
