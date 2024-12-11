@@ -55,4 +55,63 @@ class User extends BaseModel {
             return $e->getMessage();
         }
     }
+
+    public function getUser($id) {
+        try {
+            $query = "SELECT * FROM users WHERE id = :id";
+            $params = [':id' => $id];
+            $stmt = $this->executeQuery($query, $params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC); // fetchAllからfetchに変更
+            return $result ? $result : [];
+        } catch (Exception $e) {
+            error_log("Error in User.php: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function login($email, $password) {
+        try {
+            $query = "SELECT id, password FROM users WHERE email = :email";
+            $params = [':email' => $email];
+            $stmt = $this->executeQuery($query, $params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($result && password_verify($password, $result['password'])) {
+                $id = $result['id'];
+                $hashedPassword = $result['password'];
+                return ['id' => $id, 'password' => $hashedPassword];
+            } else {
+                return null;
+            }
+        } catch (Exception $e) {
+            error_log("Error in User.php: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function updateUser($id, $username, $email, $firstName, $lastName, $profile) {
+        try {
+            $fields = [];
+            $params = [':id' => $id];
+            $columns = ['username' => $username, 'email' => $email, 'first_name' => $firstName, 'last_name' => $lastName, 'profile' => $profile];
+
+            foreach ($columns as $column => $value) {
+                if ($value !== null) {
+                    $fields[] = "$column = :$column";
+                    $params[":$column"] = $value;
+                }
+            }
+
+            if (empty($fields)) {
+                throw new Exception("No fields to update.");
+            }
+
+            $query = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = :id";
+            $stmt = $this->executeQuery($query, $params);
+            return true;
+        } catch (Exception $e) {
+            error_log("Error in User.php: " . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
 }

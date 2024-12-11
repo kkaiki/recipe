@@ -20,39 +20,44 @@ return:
 - created recipes
 -->
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "mysql";
-$dbname = "recipe_db";
+
+// require '../connect.php';
+require 'User.php';
+require_once '../auth.php';
+require_once '../auditrecord.php';
+
+header('Content-Type: application/json');
 
 try {
-    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $input = json_decode(file_get_contents('php://input'), true);
+    $username = $input['local_storage_user_id'] ?? null;
+    $password = $input['local_storage_user_password'] ?? null;
 
-    echo "<p>DB 연결에 성공했습니다.</p>";
+    if ($username) {
+        $db = new Database();
+        $connection = $db->getConnection();
 
-    // Prepared Statement를 사용한 데이터 삽입
-    $sql = "INSERT INTO users (username, first_name, last_name, email, password, profile, role) 
-    VALUES (:username, :first_name, :last_name, :email, :password, :profile, :role)";
+        $auth = new Auth($connection);
+        $validUserId = $auth->checkAuth($input);
 
-    $stmt = $conn->prepare($sql);
+        $user = new User($connection);
+        $userData = $user->getUser($validUserId);
 
-    // 바인딩 값 설정
-    foreach ($data as $row) {
-        $stmt->bindParam(':username', $row['username']);
-        $stmt->bindParam(':first_name', $row['first_name']);
-        $stmt->bindParam(':last_name', $row['last_name']);
-        $stmt->bindParam(':email', $row['email']);
-        $stmt->bindParam(':password', $row['password']);
-        $stmt->bindParam(':profile', $row['profile'], PDO::PARAM_LOB); // BLOB 데이터는 특별히 처리
-        $stmt->bindParam(':role', $row['role']);
-        $stmt->execute();
+        if ($userData) {
+            echo json_encode($userData);
+        } else {
+            http_response_code(404);
+            echo json_encode(['message' => 'User not found.']);
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['message' => 'Username is required.']);
     }
-    echo "데이터가 성공적으로 삽입되었습니다.";
-} catch (PDOException $e) {
-    echo "데이터 삽입 실패: " . $e->getMessage();
-}
+} catch (Exception $e) {
+    $audit = new Audit($connection);
+    $audit->record(null, 'GET', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
 
-// 연결 해제
-$conn = null;
-?>
+    error_log("Error in getUser.php: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['message' => 'Internal server error.', 'error' => $e->getMessage()]);
+}

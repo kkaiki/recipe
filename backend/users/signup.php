@@ -25,7 +25,7 @@ try {
             echo json_encode(['message' => 'User created successfully.']);
         } elseif ($result === "User already exists.") {
             http_response_code(400);
-            echo json_encode(['message' => 'Email already exists.']);
+            echo json_encode(['message' => 'User already exists.']);
         } else {
             http_response_code(500);
             echo json_encode(['message' => 'Failed to create user.', 'error' => $result]);
