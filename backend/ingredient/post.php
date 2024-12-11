@@ -25,8 +25,12 @@
             $stmt -> bindParam(':name', $name, PDO::PARAM_STR);
             $stmt -> execute();
 
+            
             http_response_code(201);
-            echo json_encode(['message' => 'Ingredient created successfully.']);
+            echo json_encode([
+                'message' => 'Ingredient created successfully.',
+                'name' => $name // 요청에서 받은 name 값 반환
+            ]);
         }else{
             $audit = new Audit($connection);
             $audit->record($input['local_storage_user_id'], 'INSERT', "Error in post.php", $_SERVER['REMOTE_ADDR']);
