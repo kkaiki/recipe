@@ -13,4 +13,10 @@ class RecipeCategories extends BaseModel {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function addRecipeCategory($connection, $recipe_id, $category_id) {
+        $query = "INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)";
+        $stmt = $connection->prepare($query);
+        return $stmt->execute([$recipe_id, $category_id]);
+    }
 }
