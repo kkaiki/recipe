@@ -1,63 +1,54 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "mysql";
-$dbname = "recipe_db";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-$name = isset($_GET['name']) ? trim($_GET['name']) : null;
-$description = isset($_GET['description']) ? trim($_GET['description']) : null;
-
-$query = "SELECT id, name, description, is_active, created_by, created_at, image FROM recipe";
-
-$conditions = [];
-
-if ($name) {
-    $conditions[] = "name LIKE ?";
-}
-if ($description) {
-    $conditions[] = "description LIKE ?";
-}
-
-if (count($conditions) > 0) {
-    $query .= " WHERE " . implode(" OR ", $conditions);  
-}
-
-$stmt = $conn->prepare($query);
-
-$params = [];
-$types = '';  
-
-if ($name) {
-    $params[] = "%" . $name . "%";
-    $types .= 's';  
-}
-
-if ($description) {
-    $params[] = "%" . $description . "%";  
-    $types .= 's';  
-}
-
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-
-$stmt->execute();
-$result = $stmt->get_result();
-
-$recipes = [];
-while ($row = $result->fetch_assoc()) {
-    $recipes[] = $row;
-}
-
+require '../connect.php'; 
+require_once '../auditrecord.php'; 
 header('Content-Type: application/json');
-echo json_encode($recipes);
 
-$stmt->close();
-$conn->close();
-?>
+try {
+    $db = new Database();
+    $connection = $db->getConnection();
+
+    $audit = null;
+    if ($connection) {
+        $audit = new Audit($connection);
+    }
+
+    $name = isset($_GET['name']) ? trim($_GET['name']) : null;
+    $description = isset($_GET['description']) ? trim($_GET['description']) : null;
+
+    $query = "SELECT * FROM recipe";
+    $conditions = [];
+
+    if ($name) {
+        $conditions[] = "name LIKE :name";
+    }
+    if ($description) {
+        $conditions[] = "description LIKE :description";
+    }
+
+    if (count($conditions) > 0) {
+        $query .= " WHERE " . implode(" OR ", $conditions);
+    }
+
+    $stmt = $connection->prepare($query);
+
+    if ($name) {
+        $stmt->bindValue(':name', "%" . $name . "%", PDO::PARAM_STR);
+    }
+    if ($description) {
+        $stmt->bindValue(':description', "%" . $description . "%", PDO::PARAM_STR);
+    }
+
+    $stmt->execute();
+    $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode($recipes);
+
+} catch (PDOException $e) {
+    if (isset($audit)) {
+        $audit->record($_GET['user_id'] ?? null, 'ERROR', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
+    }
+    http_response_code(500);
+    echo json_encode([
+        'message' => 'Error fetching recipes.',
+        'error' => $e->getMessage()
+    ]);
+}
