@@ -1,38 +1,37 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "mysql";
-$dbname = "recipe_db";
+header('Content-Type: application/json');
+require '../connect.php';
+require_once '../auditrecord.php';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+try {
+    $db = new Database();
+    $connection = $db->getConnection();
+    $audit = new Audit($connection);
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+    $query = "SELECT * FROM recipe ORDER BY created_at DESC";
+    $stmt = $connection->prepare($query);
+    $stmt->execute();
 
-$sql = "SELECT id, name, description, is_active, created_by, created_at, image
-        FROM recipe
-        ORDER BY created_at DESC";
+    $latest = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$result = $conn->query($sql);
-
-if ($result->num_rows > 0) {
-    $recipes = array();
-    while ($row = $result->fetch_assoc()) {
-        if ($row['image']) {
-            // 예: 이미지 형식이 jpeg일 경우
-            $row['image'] = base64_encode($row['image']);
-            
-            // MIME 타입을 적절히 설정하여 출력
-            echo '<img src="data:image/jpeg;base64,' . $row['image'] . '" alt="Recipe Image" /><br>';
+    if ($latest) {
+        echo json_encode($latest);
+    } else {
+        if ($audit) {
+            $audit->record($_GET['user_id'] ?? null, 'GET', "Latest Recipe not found for ID: $id", $_SERVER['REMOTE_ADDR']);
         }
-        $recipes[] = $row;
+        http_response_code(404);
+        echo json_encode(['message' => 'Latest Recipe not found']);
     }
-    header('Content-Type: application/json');
-    echo json_encode($recipes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-} else {
-    echo json_encode(array("message" => "No recipes found"), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+} catch(PDOException $e) {
+    if (isset($audit)) {
+        $audit->record($_GET['user_id'] ?? null, 'ERROR', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
+    }
+    http_response_code(500);
+    echo json_encode([
+        'message' => 'Error fetching Latest recipes.',
+        'error' => $e->getMessage()
+    ]);
 }
 
-$conn->close();
 ?>
