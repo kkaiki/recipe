@@ -9,10 +9,10 @@ try {
     $audit = new Audit($connection);
 
     $query = "SELECT * FROM recipe ORDER BY created_at DESC";
-    $stmt = $connection->prepare($query);
+    $stmt = $connection->query($query);
     $stmt->execute();
 
-    $latest = $stmt->fetch(PDO::FETCH_ASSOC);
+    $latest = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if ($latest) {
         echo json_encode($latest);
