@@ -1,4 +1,3 @@
-<!-- to get category -->
 <?php
  require '../connect.php';
  require_once '../auditrecord.php';

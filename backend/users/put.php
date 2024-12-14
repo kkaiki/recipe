@@ -1,14 +1,3 @@
-<!-- 
-parameters:
-- username
-- first_name
-- lastName
-- profile
-- role
-
-response:
-nothing(only 200 http status code)
--->
 <?php
 require_once 'User.php';
 require_once '../auth.php';

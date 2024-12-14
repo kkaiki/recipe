@@ -1,9 +1,3 @@
-<!-- {
-    "id": 1,
-    "local_storage_user_id": 4,
-    "local_storage_user_password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
-} -->
-
 <?php
 require_once '../auth.php';
 require_once '../auditrecord.php';

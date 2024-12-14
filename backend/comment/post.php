@@ -1,9 +1,3 @@
-<!-- to create comment -->
-<!-- {댓글 내용, 작성자, 레시피id
-    "comment": "This recipe is amazing!",
-    "recipe_id": 3,
-    "created_by": 7
-} -->
 <?php
     require_once '../auth.php';
     require_once '../auditrecord.php';
