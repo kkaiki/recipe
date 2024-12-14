@@ -1,10 +1,3 @@
-<!-- to get comment -->
-<!-- {레시피별로 조회
-    "recipe_id": 1
-} -->
-<!-- 전체 댓글 조회
-{} -->
-
 <?php
 require_once '../connect.php'; 
 require_once '../auditrecord.php'; 

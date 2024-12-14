@@ -1,7 +1,3 @@
-<!-- {
-    "id": 1
-} -->
-
 <?php
 require_once '../auth.php';
 require_once '../auditrecord.php';

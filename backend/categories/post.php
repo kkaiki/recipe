@@ -1,16 +1,4 @@
-<!-- to create category -->
-<!-- 
-http응답 메시지 예시구조(클라이언트가 서버로 json데이터 전송하는 것)
-POST /api/resource HTTP/1.1
-Host: example.com
-Content-Type: application/json
-Content-Length: 49
-
-{ //여기가 본문데이터
-    "name": "Breakfast",
-    "id": 1
-} -->
- <?php
+<?php
     require_once '../auth.php';
     require_once '../auditrecord.php';
     header('Content-Type: application/json'); //json파일로 응답받음.
