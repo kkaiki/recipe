@@ -9,28 +9,70 @@ class Login extends Component {
         this.handleLoginSubmit = this.handleLoginSubmit.bind(this);
     }
 
-    handleLoginSubmit(e) {
+    componentDidMount() {
+        const userId = localStorage.getItem("user_id");
+        const userPassword = localStorage.getItem("user_password");
+
+        if (userId && userPassword) {
+            this.props.navigate("/mypage");
+        }
+    }
+
+    async handleLoginSubmit(e) {
         e.preventDefault();
 
         const { user, handleLogin, navigate } = this.props; // props에서 user, handleLogin, navigate 추출
-        const users = JSON.parse(localStorage.getItem("users")) || [];
-        const loginUser = users.find(u => u.email === user.email && u.password === user.password);
 
-        if (loginUser) {
-            handleLogin(loginUser);
-            navigate("/mypage");
-        } else {
-            alert("Invalid email or password.");
+        if (!user) {
+            alert("User information is missing.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/recipe/backend/users/login.php`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: user.email,
+                    password: user.password
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.id && data.password) {
+                localStorage.setItem("user_id", data.id);
+                localStorage.setItem("user_password", data.password);
+                handleLogin(data);
+                navigate("/mypage");
+            } else {
+                alert("Invalid email or password.");
+            }
+        } catch (error) {
+            alert("Error: " + error.message);
         }
     }
 
     render() {
         const { user, userChange } = this.props;
 
+        // user オブジェクトが null または undefined の場合にデフォルト値を設定
+        const defaultUser = {
+            email: '',
+            password: ''
+        };
+        const currentUser = user || defaultUser;
+
         const LoginForm = {
             inputs: [
-                { type: 'email', name: 'email', placeholder: 'Email address', value: user.email, changeFunc: userChange, icon: 'fa-envelope' },
-                { type: 'password', name: 'password', placeholder: 'Password', value: user.password, changeFunc: userChange, icon: 'fa-lock'}
+                { type: 'email', name: 'email', placeholder: 'Email address', value: currentUser.email, changeFunc: userChange, icon: 'fa-envelope' },
+                { type: 'password', name: 'password', placeholder: 'Password', value: currentUser.password, changeFunc: userChange, icon: 'fa-lock'}
             ],
             buttons: [{ type: 'submit', name: 'btn', label: 'login' }]
         };

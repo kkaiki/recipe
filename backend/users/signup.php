@@ -1,6 +1,6 @@
 <?php
 
-
+require '../cors.php';
 require '../connect.php';
 require 'User.php';
 header('Content-Type: application/json');
@@ -21,14 +21,10 @@ try {
         $user = new User($connection);
         $result = $user->createUser($username, $password, $email, $firstName, $lastName, $profile, $role);
 
-        if ($result === true) {
-            echo json_encode(['message' => 'User created successfully.']);
-        } elseif ($result === "User already exists.") {
-            http_response_code(400);
-            echo json_encode(['message' => 'User already exists.']);
+        if (is_array($result) && isset($result['id']) && isset($result['hashed_password'])) {
+            echo json_encode(['id' => $result['id'], 'hashed_password' => $result['hashed_password']]);
         } else {
-            http_response_code(500);
-            echo json_encode(['message' => 'Failed to create user.', 'error' => $result]);
+            echo json_encode(['error' => $result]);
         }
     } else {
         http_response_code(400);

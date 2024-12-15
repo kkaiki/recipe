@@ -6,6 +6,13 @@ import "../Custom.css";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Mypage({ user, userChange, updateUser }) {
+  const userId = localStorage.getItem("user_id");
+  const userPassword = localStorage.getItem("user_password");
+
+  // ローカルストレージの値をコンソールに出力
+  console.log("user_id:", userId);
+  console.log("user_password:", userPassword);
+
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(
@@ -15,10 +22,13 @@ export default function Mypage({ user, userChange, updateUser }) {
   const [uploadedRecipes, setUploadedRecipes] = useState([]);
 
   useEffect(() => {
-    if (!user) {
+    const userId = localStorage.getItem("user_id");
+    const userPassword = localStorage.getItem("user_password");
+
+    if (!userId || !userPassword) {
       navigate("/login");
     }
-  }, [user, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     if (!user) return;
