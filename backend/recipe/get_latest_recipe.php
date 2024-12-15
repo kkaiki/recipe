@@ -1,4 +1,5 @@
 <?php
+require '../cors.php';
 header('Content-Type: application/json');
 require '../cors.php';
 require '../connect.php';
