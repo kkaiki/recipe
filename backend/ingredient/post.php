@@ -1,12 +1,8 @@
-<!-- {
-    "name": "tomato 200g",
-    "recipe_id": 5
-} -->
-
 <?php
-    require_once '../auth.php';
-    require_once '../auditrecord.php';
-    header('Content-Type: application/json');
+require '../cors.php';
+require_once '../auth.php';
+require_once '../auditrecord.php';
+header('Content-Type: application/json');
 
     try{
         $input = json_decode(file_get_contents('php://input'),true);

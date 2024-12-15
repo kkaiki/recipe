@@ -1,5 +1,5 @@
 <?php
-
+require '../cors.php';
 require 'RecipeCategories.php';
 require_once '../auditrecord.php';
 

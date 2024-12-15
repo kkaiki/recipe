@@ -1,4 +1,5 @@
 <?php
+require '../cors.php';
 require_once '../connect.php'; 
 require_once '../auditrecord.php'; 
 header('Content-Type: application/json');

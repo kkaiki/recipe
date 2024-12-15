@@ -1,4 +1,5 @@
 <?php
+require '../cors.php';
 require '../connect.php'; 
 require_once '../auditrecord.php'; 
 

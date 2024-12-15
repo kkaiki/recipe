@@ -1,5 +1,4 @@
 <?php
-
 require '../cors.php';
 require '../connect.php';
 require 'User.php';

@@ -1,7 +1,8 @@
 <?php
-    require_once '../auth.php';
-    require_once '../auditrecord.php';
-    header('Content-Type: application/json'); //json파일로 응답받음.
+require '../cors.php';
+require_once '../auth.php';
+require_once '../auditrecord.php';
+header('Content-Type: application/json'); //json파일로 응답받음.
 
  try{
     //json 요청 데이터 파싱
