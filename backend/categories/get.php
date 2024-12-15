@@ -1,7 +1,7 @@
 <?php
- require '../connect.php';
- require_once '../auditrecord.php';
- header('Content-Type: application/json');
+require '../cors.php';
+require '../connect.php';
+require_once '../auditrecord.php';
 
  try{
     $db = new Database();
