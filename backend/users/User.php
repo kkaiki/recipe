@@ -117,4 +117,24 @@ class User extends BaseModel {
             return $e->getMessage();
         }
     }
+
+    public function getRoleByUserId($userId) {
+        try {
+            $query = "SELECT role FROM users WHERE id = :id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($result) {
+                return $result['role'];
+            } else {
+                error_log("No user found with ID: $userId");
+                return false;
+            }
+        } catch (Exception $e) {
+            error_log("Error in getRoleByUserId: " . $e->getMessage());
+            return false;
+        }
+    }
 }
