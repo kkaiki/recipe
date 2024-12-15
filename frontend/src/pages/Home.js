@@ -11,28 +11,35 @@ export default function Home() {
     // 카테고리와 레시피 데이터를 PHP API에서 가져오기
     useEffect(() => {
         axios
-          .get("http://localhost/phptamwood/recipe/backend/categories/get.php")
-          .then((response) => {
-            if (Array.isArray(response.data)) {
-              setCategories(response.data); // 카테고리를 상태로 저장
-            } else {
-              console.error("Response data is not an array.");
-              setCategories([]); // 기본값 빈 배열
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching categories:", error);
-          });
-      }, []);
+            .get(`${process.env.REACT_APP_API_URL}/recipe/backend/categories/get.php`)
+            .then((response) => {
+                if (Array.isArray(response.data)) {
+                setCategories(response.data); // 카테고리를 상태로 저장
+                } else {
+                console.error("Response data is not an array.");
+                setCategories([]); // 기본값 빈 배열
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching categories:", error);
+            });
+    }, []);
 
-    // const [recipes, setRecipes] = useState([]);
-
-    // useEffect(() => {
-    //     const storagedRecipe = JSON.parse(localStorage.getItem('recipe'));
-    //     if(storagedRecipe) {
-    //         setRecipes(storagedRecipe);
-    //     }
-    // }, []);
+    useEffect(() => {
+        axios
+            .get(`${process.env.REACT_APP_API_URL}/recipe/backend/recipe/get_latest_recipe.php`)
+            .then((response) => {
+                if (Array.isArray(response.data)) {
+                    setRecipes(response.data);
+                } else {
+                    console.error("Response data is not an array.");
+                    setRecipes([]);
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching categories:", error);
+            });
+    }, []);
 
     return (
         <div className="home-container">
