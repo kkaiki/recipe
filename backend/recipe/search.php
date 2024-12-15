@@ -12,31 +12,16 @@ try {
         $audit = new Audit($connection);
     }
 
-    $name = isset($_GET['name']) ? trim($_GET['name']) : null;
-    $description = isset($_GET['description']) ? trim($_GET['description']) : null;
+    $name = isset($_GET['q']) ? trim($_GET['q']) : null;
+    $category_id = isset($_GET['category_id']) ? trim($_GET['category_id']) : null;
 
-    $query = "SELECT * FROM recipe";
-    $conditions = [];
-
-    if ($name) {
-        $conditions[] = "name LIKE :name";
-    }
-    if ($description) {
-        $conditions[] = "description LIKE :description";
-    }
-
-    if (count($conditions) > 0) {
-        $query .= " WHERE " . implode(" OR ", $conditions);
-    }
+    $query = "SELECT r.* FROM recipe r
+                JOIN recipe_categories rc ON r.id = rc.recipe_id
+                WHERE (r.name LIKE '%$name%' OR r.description LIKE '%$name%')
+                AND ('$category_id' = '' OR rc.category_id = '$category_id')";
 
     $stmt = $connection->prepare($query);
-
-    if ($name) {
-        $stmt->bindValue(':name', "%" . $name . "%", PDO::PARAM_STR);
-    }
-    if ($description) {
-        $stmt->bindValue(':description', "%" . $description . "%", PDO::PARAM_STR);
-    }
+    
 
     $stmt->execute();
     $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
