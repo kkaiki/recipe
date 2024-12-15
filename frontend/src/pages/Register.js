@@ -4,7 +4,17 @@ import "../Custom.css";
 
 export default function Register({ user, userChange, addUser }) {
     const navigate = useNavigate();
-    
+    const apiUrl = process.env.REACT_APP_API_URL;
+
+    const defaultUser = {
+        fname: '',
+        lname: '',
+        username: '',
+        email: '',
+        password: ''
+    };
+    user = user || defaultUser;
+
     const RegisterForm = 
         {inputs: [
             { type: 'text', name: 'fname', placeholder: 'First name', value: user.fname, changeFunc: userChange, icon: 'fa-feather' },
@@ -15,12 +25,39 @@ export default function Register({ user, userChange, addUser }) {
         ],
         buttons: [{ type: 'submit', name: 'btn', label: 'Sign up' }]
     };
-    const handleRegister = (e) => {
+
+    const handleRegister = async (e) => {
         e.preventDefault();
 
         if (user.fname && user.lname && user.email && user.username && user.password) {
-            addUser(user); // Add user to the users array in App.js
-            navigate("/login");
+            try {
+                const response = await fetch(`${apiUrl}/recipe/backend/users/signup.php`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: user.username,
+                        password: user.password,
+                        email: user.email,
+                        first_name: user.fname,
+                        last_name: user.lname,
+                        profile: null,
+                        role: "viewer"
+                    })
+                });
+                const data = await response.json();
+                if (data.id && data.hashed_password) {
+                    localStorage.setItem("user_id", data.id);
+                    localStorage.setItem("user_password", data.hashed_password);
+                    addUser(user);
+                    navigate("/mypage");
+                } else {
+                    alert("Error: " + (data.error || "Unknown error"));
+                }
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
         } else {
             alert("Please fill out the form");
         }
