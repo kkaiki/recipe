@@ -12,31 +12,12 @@ try {
         $audit = new Audit($connection);
     }
 
-    $name = isset($_GET['name']) ? trim($_GET['name']) : null;
-    $description = isset($_GET['description']) ? trim($_GET['description']) : null;
+    $name = isset($_GET['q']) ? trim($_GET['q']) : null;
 
-    $query = "SELECT * FROM recipe";
-    $conditions = [];
-
-    if ($name) {
-        $conditions[] = "name LIKE :name";
-    }
-    if ($description) {
-        $conditions[] = "description LIKE :description";
-    }
-
-    if (count($conditions) > 0) {
-        $query .= " WHERE " . implode(" OR ", $conditions);
-    }
+    $query = "SELECT * FROM recipe where name like '%$name%' or description like '%$name%'";
 
     $stmt = $connection->prepare($query);
-
-    if ($name) {
-        $stmt->bindValue(':name', "%" . $name . "%", PDO::PARAM_STR);
-    }
-    if ($description) {
-        $stmt->bindValue(':description', "%" . $description . "%", PDO::PARAM_STR);
-    }
+    
 
     $stmt->execute();
     $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
