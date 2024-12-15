@@ -52,6 +52,8 @@ export default function App() {
     setUser(initialUserState); // Reset user state on logout
     localStorage.removeItem("loggedIn");
     localStorage.removeItem("user");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_password");
     alert("Logged out successfully!");
   };
 

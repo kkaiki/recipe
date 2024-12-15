@@ -6,11 +6,11 @@ import { useEffect, useState } from "react";
 export default function Navbar({ isLoggedIn, onLogout }) {
   const [currentUser, setCurrentUser] = useState('');
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    console.log(user);
-    if(user) {
-      console.log(user);
-      setCurrentUser(user.email);
+    const user_id = JSON.parse(localStorage.getItem('user_id'));
+    const user_password = JSON.parse(localStorage.getItem('user_id'));
+    console.log(user_id);
+    if(user_id && user_password) {
+      setCurrentUser(user_id);
       console.log(currentUser);
     }
   }, [])
