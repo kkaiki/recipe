@@ -16,7 +16,16 @@ try {
     }
 
     if ($id) {
-        $query = "SELECT * FROM recipe WHERE id = :id";
+        $query = "
+            SELECT r.*, u.username, GROUP_CONCAT(DISTINCT c.name) as categories, GROUP_CONCAT(DISTINCT i.name) as ingredients
+            FROM recipe r 
+            JOIN users u ON r.created_by = u.id 
+            LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
+            LEFT JOIN categories c ON rc.category_id = c.id
+            LEFT JOIN ingredient i ON r.id = i.recipe_id
+            WHERE r.id = :id
+            GROUP BY r.id, u.username
+        ";
         $stmt = $connection->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -32,11 +41,8 @@ try {
             echo json_encode(['message' => 'Recipe not found']);
         }
     } else {
-        $query = 'SELECT * FROM recipe';
-        $stmt = $connection->prepare($query);
-        $stmt->execute();
-        $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode($recipes);
+        http_response_code(400);
+        echo json_encode(['message' => 'idがありません']);
     }
 } catch (PDOException $e) {
     if (isset($audit)) {
@@ -48,3 +54,4 @@ try {
         'error' => $e->getMessage()
     ]);
 }
+?>

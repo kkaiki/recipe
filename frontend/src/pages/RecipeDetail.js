@@ -54,12 +54,12 @@ export default function RecipeDetail() {
       });
   }, [id]);
 
-  useEffect(() => {
+  const fetchComments = () => {
     axios
       .get(`http://localhost/recipe/backend/comment/get.php?recipe_id=${id}`)
       .then((response) => {
         const commentData = response.data.data.map(comment => ({
-          user: comment.username,
+          user: comment.created_by,
           text: comment.comment,
           date: comment.created_at
         }));
@@ -68,6 +68,10 @@ export default function RecipeDetail() {
       .catch((error) => {
         console.error("Error fetching comments:", error);
       });
+  };
+
+  useEffect(() => {
+    fetchComments();
   }, [id]);
 
   const handleAddComment = () => {
@@ -76,23 +80,25 @@ export default function RecipeDetail() {
       return;
     }
 
-    const updatedComments = [
-      ...comments,
-      { user: loggedInUser, text: newComment, date: new Date().toLocaleString() },
-    ];
+    const userId = localStorage.getItem("user_id");
+    const userPassword = localStorage.getItem("user_password");
 
-    setComments(updatedComments);
-    setNewComment("");
-
-    // Update comments in localStorage
-    const storedRecipes = JSON.parse(localStorage.getItem("recipe")) || [];
-    const updatedRecipes = storedRecipes.map((item) => {
-      if (item.id === parseInt(id)) {
-        return { ...item, comments: updatedComments };
-      }
-      return item;
-    });
-    localStorage.setItem("recipe", JSON.stringify(updatedRecipes));
+    axios
+      .post(`http://localhost/recipe/backend/comment/post.php`, {
+        comment: newComment,
+        recipe_id: id,
+        created_by: userId,
+        local_storage_user_id: userId,
+        local_storage_user_password: userPassword
+      })
+      .then((response) => {
+        setNewComment("");
+        fetchComments();
+      })
+      .catch((error) => {
+        console.error("Error adding comment:", error);
+        alert("Error adding comment!");
+      });
   };
 
   const handleEditComment = (index) => {
@@ -156,7 +162,7 @@ export default function RecipeDetail() {
 
         <div className="recipe-meta text-center mb-5">
           <h1 className="recipe-name">{recipe.name}</h1>
-          <p className="text-muted">Recipe by: {recipe.created_by}</p>
+          <p className="text-muted">Recipe by: {recipe.username}</p>
           <p className="text-muted">Date: {recipe.created_at}</p>
 
           {loggedInUser === uploadedUser && (
@@ -173,7 +179,7 @@ export default function RecipeDetail() {
         <div className="row text-center mb-4">
           <div className="col-md-6">
             <h6 className="side-title">Category</h6>
-            <p className="badge bg-primary">{recipe.category}</p>
+            <p className="badge bg-primary">{recipe.categories}</p>
           </div>
           <div className="col-md-6">
             <h6 className="side-title">Likes</h6>
@@ -186,7 +192,7 @@ export default function RecipeDetail() {
           <h3 className="ingredients-title">Ingredients</h3>
           {recipe.ingredients && recipe.ingredients.length > 0 ? (
             <ul className="list-group mb-4">
-              {recipe.ingredients.map((ingredient, index) => (
+              {recipe.ingredients.split(',').map((ingredient, index) => (
                 <li key={index} className="list-group-item">
                   {ingredient}
                 </li>
