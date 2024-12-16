@@ -25,7 +25,6 @@ export default function RecipeDetail() {
         const foundRecipe = response.data;
         if (foundRecipe) {
           setRecipe(foundRecipe);
-          setComments(foundRecipe.comments || []); // Initialize comments from the recipe
         } else {
           alert("Recipe not found!");
         }
@@ -52,6 +51,22 @@ export default function RecipeDetail() {
       })
       .catch((error) => {
         console.error("Error fetching likes:", error);
+      });
+  }, [id]);
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost/recipe/backend/comment/get.php?recipe_id=${id}`)
+      .then((response) => {
+        const commentData = response.data.data.map(comment => ({
+          user: comment.username,
+          text: comment.comment,
+          date: comment.created_at
+        }));
+        setComments(commentData);
+      })
+      .catch((error) => {
+        console.error("Error fetching comments:", error);
       });
   }, [id]);
 
