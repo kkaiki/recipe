@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -11,35 +12,67 @@ export default function RecipeDetail() {
   const [newComment, setNewComment] = useState("");
   const [editingCommentIndex, setEditingCommentIndex] = useState(null);
   const [editedComment, setEditedComment] = useState("");
+  const [likes, setLikes] = useState(0);
 
   const onClickEditRecipe = (recipeId) => {
     navigate(`/recipes/edit/${recipeId}`);
   };
 
   useEffect(() => {
-    const storedRecipes = JSON.parse(localStorage.getItem("recipe")) || [];
-    const foundRecipe = storedRecipes.find((item) => item.id === parseInt(id));
-
-    if (foundRecipe) {
-      setRecipe(foundRecipe);
-      setComments(foundRecipe.comments || []); // Initialize comments from the recipe
-    } else {
-      alert("Recipe not found!");
-    }
+    axios
+      .get(`http://localhost/recipe/backend/recipe/get.php?id=${id}`)
+      .then((response) => {
+        const foundRecipe = response.data;
+        if (foundRecipe) {
+          setRecipe(foundRecipe);
+        } else {
+          alert("Recipe not found!");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching recipe details:", error);
+        alert("Error fetching recipe details!");
+      });
   }, [id]);
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("user"));
-    const clickedRecipe = JSON.parse(localStorage.getItem("recipe"));
-    const currentRecipe = clickedRecipe[id - 1];
-
     if (currentUser) {
       setLoggedInUser(currentUser.email);
     }
-    if (clickedRecipe) {
-      setUploadUser(currentRecipe.user);
-    }
   }, []);
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost/recipe/backend/liked/get.php?recipe_id=${id}`)
+      .then((response) => {
+        const likeData = response.data;
+        setLikes(likeData.length);
+      })
+      .catch((error) => {
+        console.error("Error fetching likes:", error);
+      });
+  }, [id]);
+
+  const fetchComments = () => {
+    axios
+      .get(`http://localhost/recipe/backend/comment/get.php?recipe_id=${id}`)
+      .then((response) => {
+        const commentData = response.data.data.map(comment => ({
+          user: comment.created_by,
+          text: comment.comment,
+          date: comment.created_at
+        }));
+        setComments(commentData);
+      })
+      .catch((error) => {
+        console.error("Error fetching comments:", error);
+      });
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [id]);
 
   const handleAddComment = () => {
     if (!newComment.trim()) {
@@ -47,23 +80,25 @@ export default function RecipeDetail() {
       return;
     }
 
-    const updatedComments = [
-      ...comments,
-      { user: loggedInUser, text: newComment, date: new Date().toLocaleString() },
-    ];
+    const userId = localStorage.getItem("user_id");
+    const userPassword = localStorage.getItem("user_password");
 
-    setComments(updatedComments);
-    setNewComment("");
-
-    // Update comments in localStorage
-    const storedRecipes = JSON.parse(localStorage.getItem("recipe")) || [];
-    const updatedRecipes = storedRecipes.map((item) => {
-      if (item.id === parseInt(id)) {
-        return { ...item, comments: updatedComments };
-      }
-      return item;
-    });
-    localStorage.setItem("recipe", JSON.stringify(updatedRecipes));
+    axios
+      .post(`http://localhost/recipe/backend/comment/post.php`, {
+        comment: newComment,
+        recipe_id: id,
+        created_by: userId,
+        local_storage_user_id: userId,
+        local_storage_user_password: userPassword
+      })
+      .then((response) => {
+        setNewComment("");
+        fetchComments();
+      })
+      .catch((error) => {
+        console.error("Error adding comment:", error);
+        alert("Error adding comment!");
+      });
   };
 
   const handleEditComment = (index) => {
@@ -113,25 +148,22 @@ export default function RecipeDetail() {
     return <div className="container mt-5">Loading recipe details...</div>;
   }
 
-          //console.log(loggedInUser);
-          console.log(uploadedUser);
   return (
     <div className="container mt-5">
       <div className="recipe-detail">
         <div className="text-center mb-4">
           <img
             src={recipe.image}
-            alt={recipe.title}
+            alt={recipe.name}
             className="img-fluid rounded"
             style={{ maxHeight: "400px", objectFit: "cover" }}
           />
         </div>
 
         <div className="recipe-meta text-center mb-5">
-          <h1 className="recipe-name">{recipe.title}</h1>
-          <p className="text-muted">Recipe by: {recipe.user}</p>
-          <p className="text-muted">Date: {recipe.date}</p>
-          
+          <h1 className="recipe-name">{recipe.name}</h1>
+          <p className="text-muted">Recipe by: {recipe.username}</p>
+          <p className="text-muted">Date: {recipe.created_at}</p>
 
           {loggedInUser === uploadedUser && (
             <button
@@ -147,11 +179,11 @@ export default function RecipeDetail() {
         <div className="row text-center mb-4">
           <div className="col-md-6">
             <h6 className="side-title">Category</h6>
-            <p className="badge bg-primary">{recipe.category}</p>
+            <p className="badge bg-primary">{recipe.categories}</p>
           </div>
           <div className="col-md-6">
             <h6 className="side-title">Likes</h6>
-            <p className="badge bg-danger">{recipe.likes}</p>
+            <p className="badge bg-danger">{likes}</p>
           </div>
         </div>
 
@@ -160,7 +192,7 @@ export default function RecipeDetail() {
           <h3 className="ingredients-title">Ingredients</h3>
           {recipe.ingredients && recipe.ingredients.length > 0 ? (
             <ul className="list-group mb-4">
-              {recipe.ingredients.map((ingredient, index) => (
+              {recipe.ingredients.split(',').map((ingredient, index) => (
                 <li key={index} className="list-group-item">
                   {ingredient}
                 </li>
@@ -174,7 +206,7 @@ export default function RecipeDetail() {
         {/* How to Make Section */}
         <div className="recipe-content-in">
           <h3 className="make-title">How to make?</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{recipe.content}</p>
+          <p style={{ whiteSpace: "pre-wrap" }}>{recipe.description}</p>
         </div>
 
         {/* Comments Section */}
