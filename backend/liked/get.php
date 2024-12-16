@@ -1,6 +1,7 @@
 <?php
-
+require '../cors.php';
 require 'Like.php';
+require '../connect.php';
 require_once '../auditrecord.php';
 
 header('Content-Type: application/json');

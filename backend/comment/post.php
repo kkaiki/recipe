@@ -1,13 +1,8 @@
-<!-- to create comment -->
-<!-- {댓글 내용, 작성자, 레시피id
-    "comment": "This recipe is amazing!",
-    "recipe_id": 3,
-    "created_by": 7
-} -->
 <?php
-    require_once '../auth.php';
-    require_once '../auditrecord.php';
-    header('Content-Type: application/json');
+require '../cors.php';
+require_once '../auth.php';
+require_once '../auditrecord.php';
+header('Content-Type: application/json');
 
     try{
         $input = json_decode(file_get_contents('php://input'),true);

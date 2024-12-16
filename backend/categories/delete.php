@@ -1,7 +1,7 @@
-<!-- to delete category -->
- <?php
+<?php
 //  require_once '../connect.php';
- require_once '../auth.php';
+require '../cors.php';
+require_once '../auth.php';
  require '../auditrecord.php';
 //  require '../display_error';
  header('Content-Type: application/json');

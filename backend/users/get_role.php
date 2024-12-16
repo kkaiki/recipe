@@ -19,23 +19,23 @@ try {
         $validUserId = $auth->checkAuth($input);
 
         $user = new User($connection);
-        $userData = $user->getUser($validUserId);
+        $role = $user->getRoleByUserId($validUserId);
 
-        if ($userData) {
-            echo json_encode($userData);
+        if ($role) {
+            echo json_encode(['role' => $role]);
         } else {
             http_response_code(404);
             echo json_encode(['message' => 'User not found.']);
         }
     } else {
         http_response_code(400);
-        echo json_encode(['message' => 'Username is required.']);
+        echo json_encode(['message' => 'Userid is required.']);
     }
 } catch (Exception $e) {
     $audit = new Audit($connection);
     $audit->record(null, 'GET', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
 
-    error_log("Error in getUser.php: " . $e->getMessage());
+    error_log("Error in get_role.php: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['message' => 'Internal server error.', 'error' => $e->getMessage()]);
 }

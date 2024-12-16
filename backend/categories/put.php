@@ -1,8 +1,8 @@
-<!-- to update category -->
- <?php
+<?php
+require '../cors.php';
 require_once '../auth.php';
 require_once '../auditrecord.php';
- header('Content-Type: application/json');
+header('Content-Type: application/json');
 
  try{
     $input = json_decode(file_get_contents('php://input'), true);
@@ -69,13 +69,13 @@ require_once '../auditrecord.php';
         echo json_encode(['message' => 'Category updated successfully.']);
         } else {
             $audit = new Audit($connection);
-            $audit->record($input['local_storage_user_id'], 'DELETE', "Error in delete.php", $_SERVER['REMOTE_ADDR']);
+            $audit->record($input['local_storage_user_id'], 'UPDATE', "Error in update.php", $_SERVER['REMOTE_ADDR']);
             http_response_code(400);
             echo json_encode(['message'=> 'ID and at least one field to update are required.']);
         }
     } catch(Exception $e){
         $audit = new Audit($connection);
-        $audit->record($input['local_storage_user_id'] ?? null, 'DELETE', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
+        $audit->record($input['local_storage_user_id'] ?? null, 'UPDATE', $e->getMessage(), $_SERVER['REMOTE_ADDR']);
         http_response_code(500);
         echo json_encode(['message' => 'Error updating category.', 'error'=>$e->getMessage()]);
         echo json_encode(['query' => $query]);

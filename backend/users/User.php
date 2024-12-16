@@ -13,13 +13,13 @@ class User extends BaseModel {
                 return $stmt;
             }
             $count = $stmt->fetchColumn();
-
+    
             if ($count > 0) {
                 return "User already exists.";
             }
-
+    
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
+    
             $query = "INSERT INTO users (username, password, email, first_name, last_name, profile, role) VALUES (:username, :password, :email, :first_name, :last_name, :profile, :role)";
             $params = [
                 ':username' => $username,
@@ -34,13 +34,16 @@ class User extends BaseModel {
             if (is_string($stmt)) {
                 return $stmt;
             }
-            return true;
+    
+            // Get the last inserted ID
+            $userId = $this->db->lastInsertId();
+    
+            return ['id' => $userId, 'hashed_password' => $hashedPassword];
         } catch (Exception $e) {
             error_log("Error in User.php: " . $e->getMessage());
             return $e->getMessage();
         }
     }
-
     public function deleteUser($id) {
         try {
             $query = "DELETE FROM users WHERE id = :id";
@@ -112,6 +115,26 @@ class User extends BaseModel {
         } catch (Exception $e) {
             error_log("Error in User.php: " . $e->getMessage());
             return $e->getMessage();
+        }
+    }
+
+    public function getRoleByUserId($userId) {
+        try {
+            $query = "SELECT role FROM users WHERE id = :id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($result) {
+                return $result['role'];
+            } else {
+                error_log("No user found with ID: $userId");
+                return false;
+            }
+        } catch (Exception $e) {
+            error_log("Error in getRoleByUserId: " . $e->getMessage());
+            return false;
         }
     }
 }

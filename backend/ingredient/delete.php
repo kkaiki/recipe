@@ -1,8 +1,5 @@
-<!-- {
-    "id": 1
-} -->
-
 <?php
+require '../cors.php';
 require_once '../auth.php';
 require_once '../auditrecord.php';
 header('Content-Type: application/json');
