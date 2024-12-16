@@ -9,10 +9,34 @@ const AllRecipes = ({ category, searchWord }) => {
   const [currentUser, setCurrentUser] = useState("");
   const navigate = useNavigate();
 
-  // LocalStorage 데이터 가져오기
   useEffect(() => {
-    const localStoragedData = JSON.parse(localStorage.getItem("recipe")) || [];
-    setRecipes(localStoragedData);
+      const fetchRecipes = async () => {
+      try {
+        axios.get(`${process.env.REACT_APP_API_URL}/recipe/backend/recipe/search.php`)
+        .then((response) => {
+          if(Array.isArray(response.data)) {
+             const updatedRecipes = response.data.map((recipe) => {
+            if (recipe.image) {
+              return {
+                ...recipe,
+                image: `data:image/jpeg;base64,${recipe.image}`, // Base64 형식으로 변환
+              };
+            }
+            return recipe;
+          });
+
+          setRecipes(updatedRecipes);
+          } else {
+            console.error("Response data is not an array.");
+            setRecipes([]); // 기본값 빈 배열
+          }
+        }) 
+      } catch (error) {
+        console.error("Failed to fetch recipes:", error);
+      }
+    };
+
+    fetchRecipes(); 
   }, []);
 
   // axios로 dummy.json 데이터 가져오기
@@ -48,74 +72,127 @@ const AllRecipes = ({ category, searchWord }) => {
   }, []);
 
   const onClickDel = (recipeId) => {
-    let storageData = JSON.parse(localStorage.getItem("recipe")) || [];
-    const updatedData = storageData.filter(
-      (item) => item.id !== parseInt(recipeId)
-    );
+  try {
+    axios.delete(`${process.env.REACT_APP_API_URL}/recipe/backend/liked/delete.php`, {
+      data: {
+        local_storage_user_id: localStorage.getItem('user_id'),
+        local_storage_user_password: localStorage.getItem('user_password'),
+        recipe_id: recipeId
+      }
+    })
+    .then(response => {
+      console.log(response.data);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
 
-    localStorage.setItem("recipe", JSON.stringify(updatedData));
-    alert("Recipe deleted successfully");
+    // try {
+    //     axios.delete(`${process.env.REACT_APP_API_URL}/recipe/backend/liked/delete.php`)
+    //     .then((response) => {
+    //       console.log(response.data);
+    //       // if(Array.isArray(response.data)) {
+    //       //    const updatedRecipes = response.data.map((recipe) => {
+    //       //   if (recipe.image) {
+    //       //     return {
+    //       //       ...recipe,
+    //       //       image: `data:image/jpeg;base64,${recipe.image}`, // Base64 형식으로 변환
+    //       //     };
+    //       //   }
+    //       //   return recipe;
+    //       // });
 
-    setRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
-    navigate(0); // 페이지 새로고침
+    //       // setRecipes(updatedRecipes);
+    //       // } else {
+    //       //   console.error("Response data is not an array.");
+    //       //   setRecipes([]); // 기본값 빈 배열
+    //       // }
+    //     }) 
+    //   } catch (error) {
+    //     console.error("Failed to fetch recipes:", error);
+    //   }
+    // let storageData = JSON.parse(localStorage.getItem("recipe")) || [];
+    // const updatedData = storageData.filter(
+    //   (item) => item.id !== parseInt(recipeId)
+    // );
+
+    // localStorage.setItem("recipe", JSON.stringify(updatedData));
+    // alert("Recipe deleted successfully");
+
+    // setRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
+    // navigate(0); // 페이지 새로고침
   };
 
   const handleLiked = (recipeId) => {
-    const updatedRecipes = recipes.map((recipe) => {
-      if (recipe.id === recipeId) {
-        const alreadyLiked = recipe.likedBy?.includes(currentUser); // 좋아요 여부 확인
-        const updatedLikedBy = alreadyLiked
-          ? recipe.likedBy.filter((email) => email !== currentUser) // 좋아요 취소
-          : [...(recipe.likedBy || []), currentUser]; // 좋아요 추가
+    try {
+        axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/liked/post.php?id=${recipeId}`, {
+        local_storage_user_id: localStorage.getItem('user_id'),
+        local_storage_user_password: localStorage.getItem('user_password'),
+        recipe_id: recipeId,
+      })
+      .then(response => {
+        console.log('Success:', response.data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+    
 
-        return {
-          ...recipe,
-          likedBy: updatedLikedBy,
-          likes: updatedLikedBy.length, // 좋아요 수 갱신
-        };
-      }
-      return recipe;
-    });
 
-    // 상태 및 LocalStorage 업데이트
-    setRecipes(updatedRecipes);
-    localStorage.setItem("recipe", JSON.stringify(updatedRecipes));
+    // const updatedRecipes = recipes.map((recipe) => {
+    //   if (recipe.id === recipeId) {
+    //     const alreadyLiked = recipe.likedBy?.includes(currentUser); // 좋아요 여부 확인
+    //     const updatedLikedBy = alreadyLiked
+    //       ? recipe.likedBy.filter((email) => email !== currentUser) // 좋아요 취소
+    //       : [...(recipe.likedBy || []), currentUser]; // 좋아요 추가
+
+    //     return {
+    //       ...recipe,
+    //       likedBy: updatedLikedBy,
+    //       likes: updatedLikedBy.length, // 좋아요 수 갱신
+    //     };
+    //   }
+    //   return recipe;
+    // });
+
+    // // 상태 및 LocalStorage 업데이트
+    // setRecipes(updatedRecipes);
+    // localStorage.setItem("recipe", JSON.stringify(updatedRecipes));
   };
 
-  // 필터링 로직
   const filterByCategoryAndSearch = (data) => {
-    const arrayCategories = Array.isArray(category)
-      ? category.map((cate) => cate.toLowerCase().trim())
-      : [category.toLowerCase().trim()];
+  // category가 없을 경우 기본값 설정
+  const arrayCategories = Array.isArray(category)
+    ? category.map((cate) => cate?.toLowerCase().trim() || "")
+    : [category?.toLowerCase().trim() || ""];
 
-    return data.filter((recipe) => {
-      const recipeCategories = recipe.category
-        .toLowerCase()
-        .split(",")
-        .map((cate) => cate.trim());
+  return data.filter((recipe) => {
+    // recipe.category 및 기타 값이 undefined일 경우 기본값 설정
+    const recipeCategories = recipe.category
+      ? recipe.category.toLowerCase().split(",").map((cate) => cate.trim())
+      : [];
 
-      const resultCategory =
-        arrayCategories.includes("all") ||
-        recipeCategories.some((cate) => arrayCategories.includes(cate));
+    const resultCategory =
+      arrayCategories.includes("all") ||
+      recipeCategories.some((cate) => arrayCategories.includes(cate));
 
-      const resultSearch =
-        searchWord === "" ||
-        (recipe.title &&
-          recipe.title.toLowerCase().includes(searchWord.toLowerCase().trim())) ||
-        (recipe.user &&
-          recipe.user.toLowerCase().includes(searchWord.toLowerCase().trim())) ||
-        (recipe.content &&
-          recipe.content
-            .toLowerCase()
-            .includes(searchWord.toLowerCase().trim())) ||
-        (recipe.category &&
-          recipe.category
-            .toLowerCase()
-            .includes(searchWord.toLowerCase().trim()));
+    const resultSearch =
+      searchWord === "" ||
+      (recipe.title && recipe.title.toLowerCase().includes(searchWord.toLowerCase().trim())) ||
+      (recipe.user && recipe.user.toLowerCase().includes(searchWord.toLowerCase().trim())) ||
+      (recipe.content && recipe.content.toLowerCase().includes(searchWord.toLowerCase().trim())) ||
+      (recipe.category && recipe.category.toLowerCase().includes(searchWord.toLowerCase().trim()));
 
-      return resultCategory && resultSearch;
-    });
-  };
+    return resultCategory && resultSearch;
+  });
+};
+
 
   const filteredDummyRecipes = filterByCategoryAndSearch(dummyRecipes);
   const filteredLocalRecipes = filterByCategoryAndSearch(recipes);
@@ -137,15 +214,11 @@ const AllRecipes = ({ category, searchWord }) => {
                   <h3 className="card-title">{recipe.title}</h3>
                   <p className="card-text">
                     <i className="fas fa-user me-2"></i>
-                    Recipe by {recipe.user}
+                    Recipe by {recipe.created_by_username}
                   </p>
                   <p className="card-text">
                     <i className="fas fa-tag me-2"></i>
-                    <strong>Category:</strong> {recipe.category}
-                  </p>
-                  <p className="card-text">
-                    <i className="fas fa-heart me-2"></i>
-                    <strong>Likes:</strong> {recipe.likes}
+                    <strong>Category:</strong> {recipe.category_names}
                   </p>
                 </div>
               </Link>
