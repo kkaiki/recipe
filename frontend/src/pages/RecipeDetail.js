@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -11,35 +12,48 @@ export default function RecipeDetail() {
   const [newComment, setNewComment] = useState("");
   const [editingCommentIndex, setEditingCommentIndex] = useState(null);
   const [editedComment, setEditedComment] = useState("");
+  const [likes, setLikes] = useState(0);
 
   const onClickEditRecipe = (recipeId) => {
     navigate(`/recipes/edit/${recipeId}`);
   };
 
   useEffect(() => {
-    const storedRecipes = JSON.parse(localStorage.getItem("recipe")) || [];
-    const foundRecipe = storedRecipes.find((item) => item.id === parseInt(id));
-
-    if (foundRecipe) {
-      setRecipe(foundRecipe);
-      setComments(foundRecipe.comments || []); // Initialize comments from the recipe
-    } else {
-      alert("Recipe not found!");
-    }
+    axios
+      .get(`http://localhost/recipe/backend/recipe/get.php?id=${id}`)
+      .then((response) => {
+        const foundRecipe = response.data;
+        if (foundRecipe) {
+          setRecipe(foundRecipe);
+          setComments(foundRecipe.comments || []); // Initialize comments from the recipe
+        } else {
+          alert("Recipe not found!");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching recipe details:", error);
+        alert("Error fetching recipe details!");
+      });
   }, [id]);
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("user"));
-    const clickedRecipe = JSON.parse(localStorage.getItem("recipe"));
-    const currentRecipe = clickedRecipe[id - 1];
-
     if (currentUser) {
       setLoggedInUser(currentUser.email);
     }
-    if (clickedRecipe) {
-      setUploadUser(currentRecipe.user);
-    }
   }, []);
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost/recipe/backend/liked/get.php?recipe_id=${id}`)
+      .then((response) => {
+        const likeData = response.data;
+        setLikes(likeData.length);
+      })
+      .catch((error) => {
+        console.error("Error fetching likes:", error);
+      });
+  }, [id]);
 
   const handleAddComment = () => {
     if (!newComment.trim()) {
@@ -113,25 +127,22 @@ export default function RecipeDetail() {
     return <div className="container mt-5">Loading recipe details...</div>;
   }
 
-          //console.log(loggedInUser);
-          console.log(uploadedUser);
   return (
     <div className="container mt-5">
       <div className="recipe-detail">
         <div className="text-center mb-4">
           <img
             src={recipe.image}
-            alt={recipe.title}
+            alt={recipe.name}
             className="img-fluid rounded"
             style={{ maxHeight: "400px", objectFit: "cover" }}
           />
         </div>
 
         <div className="recipe-meta text-center mb-5">
-          <h1 className="recipe-name">{recipe.title}</h1>
-          <p className="text-muted">Recipe by: {recipe.user}</p>
-          <p className="text-muted">Date: {recipe.date}</p>
-          
+          <h1 className="recipe-name">{recipe.name}</h1>
+          <p className="text-muted">Recipe by: {recipe.created_by}</p>
+          <p className="text-muted">Date: {recipe.created_at}</p>
 
           {loggedInUser === uploadedUser && (
             <button
@@ -151,7 +162,7 @@ export default function RecipeDetail() {
           </div>
           <div className="col-md-6">
             <h6 className="side-title">Likes</h6>
-            <p className="badge bg-danger">{recipe.likes}</p>
+            <p className="badge bg-danger">{likes}</p>
           </div>
         </div>
 
@@ -174,7 +185,7 @@ export default function RecipeDetail() {
         {/* How to Make Section */}
         <div className="recipe-content-in">
           <h3 className="make-title">How to make?</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{recipe.content}</p>
+          <p style={{ whiteSpace: "pre-wrap" }}>{recipe.description}</p>
         </div>
 
         {/* Comments Section */}
