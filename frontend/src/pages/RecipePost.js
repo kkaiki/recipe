@@ -2,14 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import defaultImage from "../assets/images/default.png";
 import { useLocation } from "react-router-dom";
+import axios from "axios";
 import "../Custom.css";
 
 export default function RecipePost() {
     const location = useLocation();
-    const categories = [
-        "breakfast", "lunch", "dinner", "appetizer",
-        "salad", "dessert", "vegetarian", "soup", "seafood"
-    ];
     const navigate = useNavigate();
     const [isAddStatus, setIsAddStatus] = useState(false);
     const [isEditStatus, setIsEditStatus] = useState(false);
@@ -20,7 +17,6 @@ export default function RecipePost() {
     const [recipe, setRecipe] = useState({ 
         id: 0,
         title: '', 
-        user: '', 
         content: '', 
         category: '', 
         ingredients: [], // Initialize as an empty array
@@ -29,6 +25,7 @@ export default function RecipePost() {
         date: ''
     });
     const [ingredientInput, setIngredientInput] = useState(''); // Input for adding ingredients
+    const [categories, setCategories] = useState([]); // State to store categories
 
     const handleAddIngredient = () => {
         if (!ingredientInput.trim()) {
@@ -49,27 +46,45 @@ export default function RecipePost() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        let storageData = JSON.parse(localStorage.getItem("recipe")) || [];
-        if (recipeId) {
-            const index = storageData.findIndex(item => item.id === parseInt(recipeId, 10));
-            if (index !== -1) {
-                storageData[index] = { ...recipe, id: parseInt(recipeId, 10)};
-                localStorage.setItem("recipe", JSON.stringify(storageData));
-                alert("Recipe updated Successfully");
-                navigate('/recipes');
-            } else {
-                alert("Recipe not found for editing");
-            }
-        } else {
-            const newData = { ...recipe, id: storageData.length + 1, likes: 0, date:recipe.date};
-            storageData.push(newData);
-            localStorage.setItem("recipe", JSON.stringify(storageData));
-            alert("Recipe saved successfully");
+        const userId = localStorage.getItem("user_id");
+        const userPassword = localStorage.getItem("user_password");
+
+        try {
+            const recipeData = {
+                local_storage_user_id: userId,
+                local_storage_user_password: userPassword,
+                name: recipe.title,
+                description: recipe.content,
+                is_active: 1,
+                created_by: userId,
+                created_at: recipe.date,
+                image: recipe.image
+            };
+
+            const recipeResponse = await axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/recipe/post.php`, recipeData);
+            const newRecipeId = recipeResponse.data.id;
+
+            const ingredientPromises = recipe.ingredients.map(ingredient => {
+                const ingredientData = {
+                    name: ingredient,
+                    recipe_id: newRecipeId,
+                    local_storage_user_id: userId,
+                    local_storage_user_password: userPassword
+                };
+                return axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/ingredient/post.php`, ingredientData);
+            });
+
+            await Promise.all(ingredientPromises);
+
+            alert("Recipe and ingredients saved successfully");
             navigate('/recipes');
+        } catch (error) {
+            console.error("Error saving recipe and ingredients:", error);
+            alert("Error saving recipe and ingredients");
         }
-    }
+    };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -113,7 +128,6 @@ export default function RecipePost() {
         }
     }, [])
 
-
     useEffect(() => {
         if (recipeId) {
             const storageData = JSON.parse(localStorage.getItem('recipe')) || [];
@@ -138,7 +152,6 @@ export default function RecipePost() {
             console.log('No recipes found in localStorage or invalid data structure');
         } 
         if (user) {
-            setRecipe((prev) => ({ ...prev, user: user.email }));
             setCurrentUser(user);
         
         } else {
@@ -147,9 +160,20 @@ export default function RecipePost() {
         }
         
         const today = new Date().toISOString().split("T")[0];
-    setDate(today); // date 상태 업데이트
-    setRecipe((prev) => ({ ...prev, date: today })); // recipe 객체에 날짜 추가
-}, [recipeId]);
+        setDate(today); // date 状態更新
+        setRecipe((prev) => ({ ...prev, date: today })); // recipe 객체에 날짜 추가
+    }, [recipeId]);
+
+    useEffect(() => {
+        // Fetch categories from the backend
+        axios.get(`${process.env.REACT_APP_API_URL}/recipe/backend/categories/get.php`)
+            .then(response => {
+                setCategories(response.data);
+            })
+            .catch(error => {
+                console.error("Error fetching categories:", error);
+            });
+    }, []);
 
     return (
         <div className="container mt-5">
@@ -166,17 +190,6 @@ export default function RecipePost() {
                         onChange={(e) => setRecipe({...recipe, title: e.target.value })} 
                         value={recipe.title}
                         required 
-                    />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="user" className="addform-label">User</label>
-                    <input 
-                        type="text" 
-                        className="addform-input" 
-                        id="user" 
-                        onChange={(e) => setRecipe({...recipe, user: e.target.value })} 
-                        value={recipe.user} 
-                        readOnly
                     />
                 </div>
                 {/* ingredients */}
@@ -226,12 +239,12 @@ export default function RecipePost() {
                     <div className="btn-group-category" role="group" aria-label="Category Selector">
                         {categories.map((category) => (
                             <button
-                                key={category}
+                                key={category.id}
                                 type="button"
-                                className={`btn ${recipe.category.split(',').map(item => item.trim()).includes(category) ? 'addform-category-btn' : 'addform-category-outline-btn'}`}
-                                onClick={() => handleCategoryClick(category)}
+                                className={`btn ${recipe.category.split(',').map(item => item.trim()).includes(category.name) ? 'addform-category-btn' : 'addform-category-outline-btn'}`}
+                                onClick={() => handleCategoryClick(category.name)}
                             >
-                                {category.charAt(0).toUpperCase() + category.slice(1)}
+                                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
                             </button>
                         ))}
                     </div>  
@@ -258,10 +271,6 @@ export default function RecipePost() {
                         <button type="submit" className="addform-btn">Create Recipe</button>
                     )
                 }
-                {/* {
-                    isAddStatus &&
-                    <button type="submit" className="btn btn-primary">Create Recipe</button>
-                } */}
             </form>
         </div>
     );

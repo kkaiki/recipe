@@ -1,5 +1,7 @@
 <?php
+require '../cors.php';
 header('Content-Type: application/json');
+require '../cors.php';
 require '../connect.php';
 require_once '../auditrecord.php';
 
@@ -8,7 +10,7 @@ try {
     $connection = $db->getConnection();
     $audit = new Audit($connection);
 
-    $query = "SELECT * FROM recipe ORDER BY created_at DESC";
+    $query = "SELECT * FROM recipe ORDER BY created_at DESC limit 10";
     $stmt = $connection->query($query);
     $stmt->execute();
 

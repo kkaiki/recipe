@@ -1,4 +1,5 @@
 <?php
+require '../cors.php';
 require_once '../connect.php'; 
 require_once '../auditrecord.php'; 
 header('Content-Type: application/json');
@@ -11,7 +12,12 @@ try {
     $recipeId = $_GET['recipe_id'] ?? null;
 
     if ($recipeId) {
-        $query = "SELECT * FROM comment WHERE recipe_id = :recipe_id";
+        $query = "
+            SELECT c.*, u.username 
+            FROM comment c 
+            JOIN users u ON c.created_by = u.id 
+            WHERE c.recipe_id = :recipe_id
+        ";
         $stmt = $connection->prepare($query);
         $stmt->bindParam(':recipe_id', $recipeId, PDO::PARAM_INT);
 
@@ -29,7 +35,11 @@ try {
         }
     } else {
         // 모든 댓글 조회
-        $query = "SELECT * FROM comment";
+        $query = "
+            SELECT c.*, u.username 
+            FROM comment c 
+            JOIN users u ON c.created_by = u.id
+        ";
         $stmt = $connection->query($query);
 
         error_log("Executing query: $query");
