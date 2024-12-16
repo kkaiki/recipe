@@ -20,7 +20,7 @@ export default function RecipeDetail() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost/recipe/backend/recipe/get.php?id=${id}`)
+      .get(`${process.env.REACT_APP_API_URL}/recipe/backend/recipe/get.php?id=${id}`)
       .then((response) => {
         const foundRecipe = response.data;
         if (foundRecipe) {
@@ -44,7 +44,7 @@ export default function RecipeDetail() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost/recipe/backend/liked/get.php?recipe_id=${id}`)
+      .get(`${process.env.REACT_APP_API_URL}/recipe/backend/liked/get.php?recipe_id=${id}`)
       .then((response) => {
         const likeData = response.data;
         setLikes(likeData.length);
@@ -56,7 +56,7 @@ export default function RecipeDetail() {
 
   const fetchComments = () => {
     axios
-      .get(`http://localhost/recipe/backend/comment/get.php?recipe_id=${id}`)
+      .get(`${process.env.REACT_APP_API_URL}/recipe/backend/comment/get.php?recipe_id=${id}`)
       .then((response) => {
         const commentData = response.data.data.map(comment => ({
           user: comment.created_by,
@@ -84,7 +84,7 @@ export default function RecipeDetail() {
     const userPassword = localStorage.getItem("user_password");
 
     axios
-      .post(`http://localhost/recipe/backend/comment/post.php`, {
+      .post(`${process.env.REACT_APP_API_URL}/recipe/backend/comment/post.php`, {
         comment: newComment,
         recipe_id: id,
         created_by: userId,
