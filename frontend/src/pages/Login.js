@@ -61,18 +61,46 @@ class Login extends Component {
 
     render() {
         const { user, userChange } = this.props;
-
-        // user オブジェクトが null または undefined の場合にデフォルト値を設定
+    
+        if (typeof userChange !== 'function') {
+            console.error('userChange is not a function');
+            return null;
+        }
+    
         const defaultUser = {
             email: '',
             password: ''
         };
         const currentUser = user || defaultUser;
-
+    
         const LoginForm = {
             inputs: [
-                { type: 'email', name: 'email', placeholder: 'Email address', value: currentUser.email, changeFunc: userChange, icon: 'fa-envelope' },
-                { type: 'password', name: 'password', placeholder: 'Password', value: currentUser.password, changeFunc: userChange, icon: 'fa-lock'}
+                { 
+                    type: 'email', 
+                    name: 'email', 
+                    placeholder: 'Email address', 
+                    value: currentUser.email, 
+                    changeFunc: (e) => userChange({
+                        target: {
+                            name: 'email',
+                            value: e.target.value
+                        }
+                    }),
+                    icon: 'fa-envelope' 
+                },
+                { 
+                    type: 'password', 
+                    name: 'password', 
+                    placeholder: 'Password', 
+                    value: currentUser.password, 
+                    changeFunc: (e) => userChange({
+                        target: {
+                            name: 'password',
+                            value: e.target.value
+                        }
+                    }),
+                    icon: 'fa-lock'
+                }
             ],
             buttons: [{ type: 'submit', name: 'btn', label: 'login' }]
         };
