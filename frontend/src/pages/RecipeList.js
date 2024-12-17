@@ -20,7 +20,7 @@ export default function RecipeList() {
   // 카테고리 데이터 가져오기
   useEffect(() => {
     axios
-      .get("http://localhost/phptamwood/recipe/backend/categories/get.php")
+      .get(`${process.env.REACT_APP_API_URL}/recipe/backend/categories/get.php`)
       .then((response) => {
         console.log(response.data);
         if (Array.isArray(response.data)) {
@@ -36,6 +36,7 @@ export default function RecipeList() {
         console.error("Error fetching categories:", error);
       });
   }, []);
+
   useEffect(() => {
     console.log("Updated Categories:", categories);
   }, [categories]);
