@@ -16,10 +16,29 @@ try {
     $name = isset($_GET['q']) ? trim($_GET['q']) : null;
     $category_id = isset($_GET['category_id']) ? trim($_GET['category_id']) : null;
 
-    $query = "SELECT r.* FROM recipe r
-                JOIN recipe_categories rc ON r.id = rc.recipe_id
-                WHERE (r.name LIKE '%$name%' OR r.description LIKE '%$name%')
-                AND ('$category_id' = '' OR rc.category_id = '$category_id')";
+    $query = "SELECT DISTINCT
+    r.id, 
+    r.name, 
+    r.description, 
+    r.is_active, 
+    r.created_by, 
+    r.image,
+    GROUP_CONCAT(DISTINCT c.name) AS category_names,  -- 카테고리 이름을 병합
+    u.username AS created_by_username
+FROM 
+    recipe r
+LEFT JOIN 
+    recipe_categories rc ON r.id = rc.recipe_id
+LEFT JOIN 
+    categories c ON rc.category_id = c.id
+LEFT JOIN 
+    users u ON r.created_by = u.id
+WHERE 
+    (r.name LIKE '%$name%' OR r.description LIKE '%$name%')
+    AND ('$category_id' = '' OR rc.category_id = '$category_id')
+GROUP BY
+    r.id, r.name, r.description, r.is_active, r.created_by, u.username
+";
 
     $stmt = $connection->prepare($query);
     
