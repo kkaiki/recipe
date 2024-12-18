@@ -167,4 +167,16 @@ class User extends BaseModel {
             return false;
         }
     }
+
+    public function getAllUsers() {
+        try {
+            $query = "SELECT * FROM users";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error in getAllUsers: " . $e->getMessage());
+            return null;
+        }
+    }
 }
