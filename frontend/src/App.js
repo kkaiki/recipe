@@ -57,10 +57,13 @@ export default function App() {
     alert("Logged out successfully!");
   };
 
-  const userChange = (key, newVal) => {
-    setUser((prevObj) => ({ ...prevObj, [key]: newVal }));
+  const userChange = (e) => {
+    setUser(prevUser => ({
+        ...prevUser,
+        [e.target.name]: e.target.value
+    }));
   };
-
+  
   const addUser = (newUser) => {
     setUsers((prevUsers) => {
       const updatedUsers = [...prevUsers, newUser];

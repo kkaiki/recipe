@@ -11,7 +11,7 @@ export default function Formcomponent({ elements, onSubmit }) {
                             name={input.name}
                             placeholder={input.placeholder}
                             value={input.value}
-                            onChange={(e) => input.changeFunc(e.target.name, e.target.value)}
+                            onChange={(e) => input.changeFunc(e)}
                         />
                     </div>
                 );

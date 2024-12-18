@@ -118,6 +118,36 @@ class User extends BaseModel {
         }
     }
 
+    public function updateUserRole($id, $change_role, $user_role) {
+        try {
+            $fields = [];
+            $params = [':id' => $id];
+            $columns = ['role' => $change_role];
+
+            if ($user_role == 'editer' && $change_role == 'admin') {
+                throw new Exception('You do not have permission to update user roles.');
+            }
+
+            foreach ($columns as $column => $value) {
+                $fields[] = "$column = :$column";
+                if ($value !== null) {
+                    $params[":$column"] = $value;
+                }
+            }
+
+            if (empty($fields)) {
+                throw new Exception("No fields to update.");
+            }
+
+            $query = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = :id";
+            $stmt = $this->executeQuery($query, $params);
+            return true;
+        } catch (Exception $e) {
+            error_log("Error in User.php: " . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
+
     public function getRoleByUserId($userId) {
         try {
             $query = "SELECT role FROM users WHERE id = :id";
