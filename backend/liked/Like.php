@@ -25,7 +25,7 @@ class Like extends BaseModel {
     public function getLikedRecipes($user_id){
         try {
             $query = "
-                SELECT r.id, r.image 
+                SELECT r.id, r.image, r.name
                 FROM liked l
                 JOIN recipe r ON l.recipe_id = r.id
                 WHERE l.created_by = :created_by

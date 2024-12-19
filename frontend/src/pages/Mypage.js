@@ -42,6 +42,34 @@ export default function Mypage({ user, userChange, updateUser }) {
     });
   }, []);
 
+  const fetchLikedRecipes = useCallback(() => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/liked/get_liked_recipe.php`, {
+          local_storage_user_id: userId,
+          local_storage_user_password: userPassword
+        })
+        .then(response => {
+          const uniqueLikedRecipes = Array.from(new Map(
+            response.data.map(item => [item.id, item])
+          ).values());
+          setLikedRecipes(uniqueLikedRecipes);
+          resolve();
+        })
+        .catch(error => {
+          console.error("Error fetching liked recipes:", error);
+          resolve();
+        });
+      }, 500);
+    });
+  }, [userId, userPassword]);
+  
+  useEffect(() => {
+    if (userId && userPassword) {
+      fetchLikedRecipes();
+    }
+  }, [userId, userPassword, fetchLikedRecipes]);
+
   useEffect(() => {
     if (!userId || !userPassword) {
       navigate("/login");
@@ -273,30 +301,30 @@ export default function Mypage({ user, userChange, updateUser }) {
         <section className="recipes-section">
           <h4 className="section-title">Liked Recipes</h4>
           <div className="recipe-grid">
-            {likedRecipes.length > 0 ? (
-              likedRecipes.map((recipe) => (
-                <Link
-                  key={recipe.id}
-                  to={`/recipes/${recipe.id}`}
-                  className="recipe-card"
-                >
-                  <img
-                    src={recipe.image ? recipe.image : defaultImage}
-                    alt={recipe.title}
-                    className="recipe-image"
-                  />
-                  <div className="recipe-content">
-                    <h4 className="recipe-title">{recipe.title}</h4>
-                    <p className="recipe-description">{recipe.content}</p>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="no-recipes">
-                <i className="fas fa-heart d-block"></i>
-                No liked recipes yet.
+          {likedRecipes.map((recipe) => (
+            <Link
+              key={recipe.id}
+              to={`/recipes/${recipe.id}`}
+              className="recipe-card"
+            >
+              <img
+                src={recipe.image 
+                  ? (recipe.image.startsWith('data:image') 
+                    ? recipe.image 
+                    : `data:image/jpeg;base64,${recipe.image}`)
+                  : defaultImage}
+                alt={recipe.name}
+                className="recipe-image"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = defaultImage;
+                }}
+              />
+              <div className="recipe-content">
+                <h4 className="recipe-title">{recipe.name}</h4>
               </div>
-            )}
+            </Link>
+          ))}
           </div>
         </section>
       </div>
