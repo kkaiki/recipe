@@ -1,17 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Formcomponent from "../components/Formcomponent";
 import defaultProfile from "../assets/images/default-profile.png";
 import defaultImage from "../assets/images/default.png";
 import "../Custom.css";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function Mypage({ user, userChange, updateUser }) {
   const userId = localStorage.getItem("user_id");
   const userPassword = localStorage.getItem("user_password");
-
-  // ローカルストレージの値をコンソールに出力
-  console.log("user_id:", userId);
-  console.log("user_password:", userPassword);
 
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -21,14 +18,37 @@ export default function Mypage({ user, userChange, updateUser }) {
   const [likedRecipes, setLikedRecipes] = useState([]);
   const [uploadedRecipes, setUploadedRecipes] = useState([]);
 
-  useEffect(() => {
-    const userId = localStorage.getItem("user_id");
-    const userPassword = localStorage.getItem("user_password");
+  const fetchUserData = useCallback(() => {
+    axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/users/get.php`, {
+      local_storage_user_id: userId,
+      local_storage_user_password: userPassword
+    })
+    .then(response => {
+      const userData = response.data;
+      const updatedUser = {
+        username: userData.username,
+        fname: userData.first_name,
+        lname: userData.last_name,
+        email: userData.email,
+        password: userData.password,
+        profileImage: userData.profile || defaultProfile
+      };
+      updateUser(updatedUser);
+      setProfileImage(updatedUser.profileImage);
+    })
+    .catch(error => {
+      console.error("Error fetching user data:", error);
+      navigate("/login");
+    });
+  }, []);
 
+  useEffect(() => {
     if (!userId || !userPassword) {
       navigate("/login");
+    } else {
+      fetchUserData();
     }
-  }, [navigate]);
+  }, [userId, userPassword, navigate, fetchUserData]);
 
   useEffect(() => {
     if (!user) return;
