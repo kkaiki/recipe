@@ -101,18 +101,34 @@ export default function Mypage({ user, userChange, updateUser }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const updatedUsers = users.map((u) => {
-      if (u.email === user.email) {
-        return { ...user };
-      }
-      return u;
-    });
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    localStorage.setItem("user", JSON.stringify(user));
-
-    setIsEditing(false);
+  
+    const updatedUser = {
+      local_storage_user_id: userId,
+      local_storage_user_password: userPassword,
+      username: user.username,
+      first_name: user.fname,
+      last_name: user.lname,
+      email: user.email,
+      profile: profileImage
+    };
+  
+    axios.put(`${process.env.REACT_APP_API_URL}/recipe/backend/users/put.php`, updatedUser)
+      .then(response => {
+        console.log(response.data.message);
+        const users = JSON.parse(localStorage.getItem("users")) || [];
+        const updatedUsers = users.map((u) => {
+          if (u.email === user.email) {
+            return { ...user };
+          }
+          return u;
+        });
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+        localStorage.setItem("user", JSON.stringify(user));
+        setIsEditing(false);
+      })
+      .catch(error => {
+        console.error("Error updating user data:", error);
+      });
   };
 
   const formElements = {

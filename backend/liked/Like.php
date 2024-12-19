@@ -22,6 +22,34 @@ class Like extends BaseModel {
         }
     }
 
+    public function getLikedRecipes($user_id){
+        try {
+            $query = "
+                SELECT r.id, r.image 
+                FROM liked l
+                JOIN recipe r ON l.recipe_id = r.id
+                WHERE l.created_by = :created_by
+            ";
+            $params = [':created_by' => $user_id];
+            $stmt = $this->executeQuery($query, $params);
+            
+            if (is_string($stmt)) {
+                error_log("Error executing query in Like.php: " . $stmt);
+                return $stmt;
+            }
+    
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!$results) {
+                return [];
+            }
+    
+            return $results;
+        } catch (Exception $e) {
+            error_log("Error in Like.php: " . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
+
     public function liked($recipe_id, $user_id){
         try {
             $query = "INSERT INTO liked (recipe_id, created_by) VALUES (:recipe_id, :created_by)";
