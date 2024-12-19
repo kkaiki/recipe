@@ -1,17 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Formcomponent from "../components/Formcomponent";
 import defaultProfile from "../assets/images/default-profile.png";
 import defaultImage from "../assets/images/default.png";
 import "../Custom.css";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function Mypage({ user, userChange, updateUser }) {
   const userId = localStorage.getItem("user_id");
   const userPassword = localStorage.getItem("user_password");
-
-  // ローカルストレージの値をコンソールに出力
-  console.log("user_id:", userId);
-  console.log("user_password:", userPassword);
 
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -21,14 +18,75 @@ export default function Mypage({ user, userChange, updateUser }) {
   const [likedRecipes, setLikedRecipes] = useState([]);
   const [uploadedRecipes, setUploadedRecipes] = useState([]);
 
-  useEffect(() => {
-    const userId = localStorage.getItem("user_id");
-    const userPassword = localStorage.getItem("user_password");
+  const fetchUserData = useCallback(() => {
+    axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/users/get.php`, {
+      local_storage_user_id: userId,
+      local_storage_user_password: userPassword
+    })
+    .then(response => {
+      const userData = response.data;
+      const updatedUser = {
+        username: userData.username,
+        fname: userData.first_name,
+        lname: userData.last_name,
+        email: userData.email,
+        password: userData.password,
+        profileImage: userData.profile || defaultProfile
+      };
+      updateUser(updatedUser);
+      setProfileImage(updatedUser.profileImage);
+    })
+    .catch(error => {
+      console.error("Error fetching user data:", error);
+      navigate("/login");
+    });
+  }, []);
 
+  const fetchLikedRecipes = useCallback(() => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/liked/get_liked_recipe.php`, {
+          local_storage_user_id: userId,
+          local_storage_user_password: userPassword
+        })
+        .then(response => {
+          const uniqueLikedRecipes = Array.from(new Map(
+            response.data.map(item => [item.id, item])
+          ).values());
+          setLikedRecipes(uniqueLikedRecipes);
+          resolve();
+        })
+        .catch(error => {
+          console.error("Error fetching liked recipes:", error);
+          resolve();
+        });
+      });
+    });
+  }, [userId, userPassword]);
+
+  const fetchUploadedRecipes = useCallback(() => {
+    return axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/recipe/get_created_recipe.php`, {
+      local_storage_user_id: userId,
+      local_storage_user_password: userPassword
+    })
+    .then(response => {
+      setUploadedRecipes(response.data);
+    })
+    .catch(error => {
+      console.error("Error fetching uploaded recipes:", error);
+      setUploadedRecipes([]);
+    });
+  }, [userId, userPassword]);
+
+  useEffect(() => {
     if (!userId || !userPassword) {
       navigate("/login");
-    }
-  }, [navigate]);
+    } else {
+      fetchUserData();
+      fetchLikedRecipes();
+      fetchUploadedRecipes();
+      }
+  }, [userId, userPassword, navigate, fetchUserData]);
 
   useEffect(() => {
     if (!user) return;
@@ -81,18 +139,34 @@ export default function Mypage({ user, userChange, updateUser }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const updatedUsers = users.map((u) => {
-      if (u.email === user.email) {
-        return { ...user };
-      }
-      return u;
-    });
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    localStorage.setItem("user", JSON.stringify(user));
-
-    setIsEditing(false);
+  
+    const updatedUser = {
+      local_storage_user_id: userId,
+      local_storage_user_password: userPassword,
+      username: user.username,
+      first_name: user.fname,
+      last_name: user.lname,
+      email: user.email,
+      profile: profileImage
+    };
+  
+    axios.put(`${process.env.REACT_APP_API_URL}/recipe/backend/users/put.php`, updatedUser)
+      .then(response => {
+        console.log(response.data.message);
+        const users = JSON.parse(localStorage.getItem("users")) || [];
+        const updatedUsers = users.map((u) => {
+          if (u.email === user.email) {
+            return { ...user };
+          }
+          return u;
+        });
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+        localStorage.setItem("user", JSON.stringify(user));
+        setIsEditing(false);
+      })
+      .catch(error => {
+        console.error("Error updating user data:", error);
+      });
   };
 
   const formElements = {
@@ -215,13 +289,21 @@ export default function Mypage({ user, userChange, updateUser }) {
                   className="recipe-card"
                 >
                   <img
-                    src={recipe.image ? recipe.image : defaultImage}
-                    alt={recipe.title}
+                    src={recipe.image 
+                      ? (recipe.image.startsWith('data:image') 
+                        ? recipe.image 
+                        : `data:image/jpeg;base64,${recipe.image}`)
+                      : defaultImage}
+                    alt={recipe.name}
                     className="recipe-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = defaultImage;
+                    }}
                   />
                   <div className="recipe-content">
-                    <h4 className="recipe-title">{recipe.title}</h4>
-                    <p className="recipe-description">{recipe.content}</p>
+                    <h4 className="recipe-title">{recipe.name}</h4>
+                    <p className="recipe-description">{recipe.description}</p>
                   </div>
                 </Link>
               ))
@@ -237,30 +319,30 @@ export default function Mypage({ user, userChange, updateUser }) {
         <section className="recipes-section">
           <h4 className="section-title">Liked Recipes</h4>
           <div className="recipe-grid">
-            {likedRecipes.length > 0 ? (
-              likedRecipes.map((recipe) => (
-                <Link
-                  key={recipe.id}
-                  to={`/recipes/${recipe.id}`}
-                  className="recipe-card"
-                >
-                  <img
-                    src={recipe.image ? recipe.image : defaultImage}
-                    alt={recipe.title}
-                    className="recipe-image"
-                  />
-                  <div className="recipe-content">
-                    <h4 className="recipe-title">{recipe.title}</h4>
-                    <p className="recipe-description">{recipe.content}</p>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="no-recipes">
-                <i className="fas fa-heart d-block"></i>
-                No liked recipes yet.
+          {likedRecipes.map((recipe) => (
+            <Link
+              key={recipe.id}
+              to={`/recipes/${recipe.id}`}
+              className="recipe-card"
+            >
+              <img
+                src={recipe.image 
+                  ? (recipe.image.startsWith('data:image') 
+                    ? recipe.image 
+                    : `data:image/jpeg;base64,${recipe.image}`)
+                  : defaultImage}
+                alt={recipe.name}
+                className="recipe-image"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = defaultImage;
+                }}
+              />
+              <div className="recipe-content">
+                <h4 className="recipe-title">{recipe.name}</h4>
               </div>
-            )}
+            </Link>
+          ))}
           </div>
         </section>
       </div>
