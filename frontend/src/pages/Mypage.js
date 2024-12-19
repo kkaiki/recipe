@@ -60,22 +60,32 @@ export default function Mypage({ user, userChange, updateUser }) {
           console.error("Error fetching liked recipes:", error);
           resolve();
         });
-      }, 500);
+      });
     });
   }, [userId, userPassword]);
-  
-  useEffect(() => {
-    if (userId && userPassword) {
-      fetchLikedRecipes();
-    }
-  }, [userId, userPassword, fetchLikedRecipes]);
+
+  const fetchUploadedRecipes = useCallback(() => {
+    return axios.post(`${process.env.REACT_APP_API_URL}/recipe/backend/recipe/get_created_recipe.php`, {
+      local_storage_user_id: userId,
+      local_storage_user_password: userPassword
+    })
+    .then(response => {
+      setUploadedRecipes(response.data);
+    })
+    .catch(error => {
+      console.error("Error fetching uploaded recipes:", error);
+      setUploadedRecipes([]);
+    });
+  }, [userId, userPassword]);
 
   useEffect(() => {
     if (!userId || !userPassword) {
       navigate("/login");
     } else {
       fetchUserData();
-    }
+      fetchLikedRecipes();
+      fetchUploadedRecipes();
+      }
   }, [userId, userPassword, navigate, fetchUserData]);
 
   useEffect(() => {
@@ -279,13 +289,21 @@ export default function Mypage({ user, userChange, updateUser }) {
                   className="recipe-card"
                 >
                   <img
-                    src={recipe.image ? recipe.image : defaultImage}
-                    alt={recipe.title}
+                    src={recipe.image 
+                      ? (recipe.image.startsWith('data:image') 
+                        ? recipe.image 
+                        : `data:image/jpeg;base64,${recipe.image}`)
+                      : defaultImage}
+                    alt={recipe.name}
                     className="recipe-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = defaultImage;
+                    }}
                   />
                   <div className="recipe-content">
-                    <h4 className="recipe-title">{recipe.title}</h4>
-                    <p className="recipe-description">{recipe.content}</p>
+                    <h4 className="recipe-title">{recipe.name}</h4>
+                    <p className="recipe-description">{recipe.description}</p>
                   </div>
                 </Link>
               ))
